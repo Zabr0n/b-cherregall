@@ -1,6 +1,6 @@
 // Einfacher Hash-Router: #/regal, #/buch/<id>, #/hinzufuegen, #/statistik, …
 
-import { $, $$ } from './ui.js';
+import { $, $$, esc } from './ui.js';
 import { getState, subscribe } from './store.js';
 import { ensureCovers } from './covers.js';
 import * as shelf from './views/shelf.js';
@@ -58,7 +58,11 @@ function route() {
 // Navigation zeigt „Anmelden“ bzw. den Namen des angemeldeten Nutzers.
 function updateAccountNav() {
   const user = getUser();
-  $('#nav-account').textContent = user ? `👤 ${user.displayName || user.username}` : 'Anmelden';
+  const link = $('#nav-account');
+  const label = user ? user.displayName || user.username : 'Anmelden';
+  // Auf dem Handy ist nur das Symbol zu sehen (Name per CSS ausgeblendet).
+  link.innerHTML = `👤 <span class="nav-name">${esc(label)}</span>`;
+  link.title = user ? `Konto: ${label}` : 'Anmelden';
 }
 onAccountChange(updateAccountNav);
 updateAccountNav();

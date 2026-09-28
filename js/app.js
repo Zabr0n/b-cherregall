@@ -9,6 +9,8 @@ import * as add from './views/add.js';
 import * as stats from './views/stats.js';
 import * as recs from './views/recs.js';
 import * as settings from './views/settings.js';
+import * as account from './views/account.js';
+import { initAccount, getUser, onAccountChange } from './account.js';
 
 const routes = {
   regal: shelf,
@@ -17,6 +19,7 @@ const routes = {
   statistik: stats,
   empfehlungen: recs,
   einstellungen: settings,
+  konto: account,
 };
 
 const TITLES = {
@@ -26,6 +29,7 @@ const TITLES = {
   statistik: 'Statistik',
   empfehlungen: 'Empfehlungen',
   einstellungen: 'Einstellungen',
+  konto: 'Konto',
 };
 
 let cleanup = null;
@@ -47,8 +51,18 @@ function route() {
   }
 }
 
+// Navigation zeigt „Anmelden“ bzw. den Namen des angemeldeten Nutzers.
+function updateAccountNav() {
+  const user = getUser();
+  $('#nav-account').textContent = user ? `👤 ${user.displayName || user.username}` : 'Anmelden';
+}
+onAccountChange(updateAccountNav);
+updateAccountNav();
+
 window.addEventListener('hashchange', route);
+window.addEventListener('library:replaced', route);
 route();
+initAccount();
 
 // Fehlende Cover für neue und bestehende Bücher im Hintergrund nachladen.
 subscribe((state) => ensureCovers(state.books));

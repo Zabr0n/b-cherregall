@@ -386,6 +386,14 @@ a.rec:hover { background: var(--surface-2); color: var(--ink); }
 }
 .toast.show { transform: translate(-50%, 0); opacity: 1; }
 
+/* ===== Konto ===== */
+.kv { display: grid; grid-template-columns: max-content 1fr; gap: .3rem 1rem; margin: 0 0 .8rem; }
+.kv dt { color: var(--muted); font-size: .9rem; }
+.kv dd { margin: 0; overflow-wrap: anywhere; }
+.form-msg { min-height: 1.5em; margin: .6rem 0 0; }
+.form-msg:empty { display: none; }
+button:disabled { opacity: .6; cursor: wait; }
+
 /* ===== Mobil ===== */
 @media (max-width: 760px) {
   .topbar { flex-wrap: wrap; gap: .4rem; padding-block: .5rem; }

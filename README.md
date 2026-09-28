@@ -40,11 +40,46 @@ Allerweltsbegriffe wie „fiction“ gegenseitig aufheben. Kandidaten werden geg
 gewertet, wobei höchstens zwei Vorschläge pro Autor:in in die Liste kommen. Bewerte also auch
 Bücher, die dir *nicht* gefallen haben – das schärft die Vorschläge.
 
-## Daten
+## Daten & Konto
 
-Alles liegt nur im `localStorage` deines Browsers. Es gibt kein Konto und keinen Server,
-der deine Daten sieht. Buchdaten werden von [Open Library](https://openlibrary.org) und
-Google Books abgefragt. Erstelle regelmäßig eine Sicherung unter ⚙ Einstellungen.
+Ohne Konto liegt alles nur im `localStorage` deines Browsers. Unter **Anmelden** (`#/konto`)
+kann man sich registrieren und anmelden. Dann wird die Bibliothek (Bücher, Bewertungen,
+Rezensionen, Einstellungen) im Konto auf dem Server gespeichert und zwischen Geräten
+synchronisiert. Beim ersten Anmelden werden die Bücher aus dem Browser ins Konto übernommen.
+Buchdaten werden von [Open Library](https://openlibrary.org) und Google Books abgefragt.
+
+Die Web-App bleibt statisch (GitHub Pages, buchbrett.de). Konten und Daten verwaltet die kleine
+API im Ordner `api/` (Node.js + PostgreSQL), die auf [Railway](https://railway.com) läuft.
+Passwörter werden nur als scrypt-Hash gespeichert. Die Anmeldung läuft über ein Token
+(90 Tage gültig), von dem der Server nur einen Hash speichert.
+
+### API auf Railway einrichten
+
+1. In Railway ein neues Projekt anlegen → **Deploy from GitHub repo** → dieses Repo wählen.
+2. Im Service unter **Settings**:
+   - **Source → Branch**: `buecherregal-app`
+   - **Source → Root Directory**: `/api`
+3. Im Projekt **+ New → Database → PostgreSQL** hinzufügen.
+4. Im API-Service unter **Variables**:
+   - `DATABASE_URL` = `${{Postgres.DATABASE_URL}}`
+   - optional `ALLOWED_ORIGINS` (Standard: `https://buchbrett.de,https://www.buchbrett.de`)
+5. Unter **Settings → Networking → Custom Domain** `api.buchbrett.de` eintragen und den
+   angezeigten CNAME-Eintrag beim Domain-Anbieter anlegen.
+
+Die Tabellen legt die API beim Start selbst an. Soll eine andere API-Adresse verwendet werden,
+wird sie in `js/config.js` eingetragen.
+
+### Lokal entwickeln
+
+```bash
+cd api && npm install
+DATABASE_URL=postgres://localhost/buecherregal ALLOWED_ORIGINS=http://localhost:8080 npm start
+# in einem zweiten Terminal im Hauptordner:
+npm start   # http://localhost:8080 – nutzt automatisch die API auf localhost:3000
+```
+
+Tests der API (brauchen eine leere Test-Datenbank):
+`cd api && TEST_DATABASE_URL=postgres://localhost/buecher_test npm test`
 
 ## Aufbau
 
@@ -53,8 +88,11 @@ index.html          App-Hülle und Navigation
 css/style.css       Gestaltung (Hell/Dunkel automatisch)
 js/app.js           Hash-Router
 js/store.js         Datenmodell & Persistenz (localStorage)
+js/account.js       Konto & Synchronisierung mit der API
+js/config.js        Adresse der API
 js/api.js           Open Library / Google Books, ISBN-Prüfung
 js/recommend.js     Geschmacksprofil & Empfehlungen
 js/views/*.js       Regal, Buch, Hinzufügen, Statistik, Empfehlungen, Einstellungen
 server.js           Minimaler statischer Server für `npm start`
+api/                Konto-API für Railway (Express + PostgreSQL)
 ```

@@ -1,6 +1,7 @@
 import { getState, updateSettings, exportJSON, importJSON, resetDismissed, addBook } from '../store.js';
 import { $, toast } from '../ui.js';
 import { DEMO_BOOKS } from '../demo.js';
+import { isLoggedIn } from '../account.js';
 
 export function render(main) {
   const { settings, books, dismissed } = getState();
@@ -21,8 +22,11 @@ export function render(main) {
 
       <div class="card">
         <h2 class="card-title">Daten</h2>
-        <p class="muted small">Deine Bibliothek (${books.length} Bücher) wird nur lokal in diesem Browser gespeichert.
-          Erstelle regelmäßig eine Sicherung – damit kannst du sie auch auf ein anderes Gerät übertragen.</p>
+        <p class="muted small">${isLoggedIn()
+          ? `Deine Bibliothek (${books.length} Bücher) wird in deinem <a href="#/konto">Konto</a> gespeichert
+             und auf all deinen Geräten synchronisiert. Eine zusätzliche Sicherung schadet trotzdem nicht.`
+          : `Deine Bibliothek (${books.length} Bücher) wird nur lokal in diesem Browser gespeichert.
+             <a href="#/konto">Melde dich an</a>, um sie in einem Konto zu speichern, oder erstelle regelmäßig eine Sicherung.`}</p>
         <div class="row wrap">
           <button class="btn btn-primary" id="export">Sicherung herunterladen</button>
           <label class="btn">Sicherung importieren<input type="file" id="import" accept="application/json,.json" hidden></label>

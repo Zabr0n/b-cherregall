@@ -142,6 +142,16 @@ export function resetDismissed() {
   save();
 }
 
+/** Ersetzt den kompletten Stand, z. B. mit den Daten vom Server. */
+export function replaceState(data) {
+  state = {
+    ...structuredClone(DEFAULTS),
+    ...data,
+    settings: { ...DEFAULTS.settings, ...data?.settings },
+  };
+  save();
+}
+
 export function exportJSON() {
   return JSON.stringify({ app: 'buecherregal', version: 1, exportedAt: new Date().toISOString(), ...state }, null, 2);
 }

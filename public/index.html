@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>b-cherregall</title>
+  <link rel="stylesheet" href="/style.css">
+</head>
+<body>
+  <header>
+    <a class="brand" href="/">📚 b-cherregall</a>
+    <nav id="nav"></nav>
+  </header>
+  <main>
+    <div class="card">
+      <h1>Dein digitales Bücherregal</h1>
+      <p id="welcome" class="muted">Melde dich an oder erstelle ein Konto, um dein Bücherregal zu nutzen.</p>
+      <p id="actions">
+        <a class="button" href="/register">Konto erstellen</a>
+        <a href="/login" style="margin-left:12px">Anmelden</a>
+      </p>
+    </div>
+  </main>
+  <script type="module">
+    import { currentUser } from '/app.js';
+    const user = await currentUser();
+    if (user) {
+      document.getElementById('welcome').textContent = `Willkommen zurück, ${user.displayName}!`;
+      document.getElementById('actions').innerHTML = '<a class="button" href="/profile">Zu meinem Profil</a>';
+      document.getElementById('nav').innerHTML = '<a href="/profile">Profil</a>';
+    } else {
+      document.getElementById('nav').innerHTML = '<a href="/login">Anmelden</a>';
+    }
+  </script>
+</body>
+</html>

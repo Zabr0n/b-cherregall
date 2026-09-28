@@ -1,0 +1,103 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Mein Profil – b-cherregall</title>
+  <link rel="stylesheet" href="/style.css">
+</head>
+<body>
+  <header>
+    <a class="brand" href="/">📚 b-cherregall</a>
+    <nav><button id="logout" class="secondary" type="button">Abmelden</button></nav>
+  </header>
+  <main hidden>
+    <section class="card">
+      <h1>Hallo, <span id="greeting"></span>!</h1>
+      <dl>
+        <dt>Benutzername</dt><dd id="username"></dd>
+        <dt>E-Mail</dt><dd id="email"></dd>
+        <dt>Mitglied seit</dt><dd id="created"></dd>
+      </dl>
+    </section>
+
+    <form id="profile" class="card">
+      <h2>Profil bearbeiten</h2>
+      <label>Anzeigename
+        <input name="displayName" maxlength="64" required>
+      </label>
+      <label>Über mich
+        <textarea name="bio" maxlength="1000"></textarea>
+      </label>
+      <button type="submit">Speichern</button>
+      <p class="message" role="status"></p>
+    </form>
+
+    <form id="password" class="card">
+      <h2>Passwort ändern</h2>
+      <label>Aktuelles Passwort
+        <input name="currentPassword" type="password" required autocomplete="current-password">
+      </label>
+      <label>Neues Passwort <small>(mind. 8 Zeichen)</small>
+        <input name="newPassword" type="password" required minlength="8" autocomplete="new-password">
+      </label>
+      <button type="submit">Passwort ändern</button>
+      <p class="message" role="status"></p>
+    </form>
+
+    <form id="delete" class="card">
+      <h2>Konto löschen</h2>
+      <p class="muted">Dein Konto und alle gespeicherten Daten werden dauerhaft gelöscht.</p>
+      <label>Passwort zur Bestätigung
+        <input name="password" type="password" required autocomplete="current-password">
+      </label>
+      <button type="submit" class="danger">Konto löschen</button>
+      <p class="message" role="alert"></p>
+    </form>
+  </main>
+  <script type="module">
+    import { api, handleForm, currentUser, showMessage } from '/app.js';
+
+    let user = await currentUser();
+    if (!user) location.replace('/login');
+
+    const $ = (id) => document.getElementById(id);
+    function render() {
+      $('greeting').textContent = user.displayName;
+      $('username').textContent = user.username;
+      $('email').textContent = user.email;
+      $('created').textContent = new Date(user.createdAt.replace(' ', 'T') + 'Z').toLocaleDateString('de-DE');
+      $('profile').displayName.value = user.displayName;
+      $('profile').bio.value = user.bio;
+    }
+
+    if (user) {
+      render();
+      document.querySelector('main').hidden = false;
+    }
+
+    handleForm($('profile'), async (data, message) => {
+      user = (await api('/api/me', { method: 'PUT', body: data })).user;
+      render();
+      showMessage(message, 'Gespeichert.', 'ok');
+    });
+
+    handleForm($('password'), async (data, message) => {
+      await api('/api/me/password', { method: 'PUT', body: data });
+      $('password').reset();
+      showMessage(message, 'Passwort geändert.', 'ok');
+    });
+
+    handleForm($('delete'), async (data) => {
+      if (!confirm('Konto wirklich endgültig löschen?')) return;
+      await api('/api/me', { method: 'DELETE', body: data });
+      location.href = '/';
+    });
+
+    $('logout').addEventListener('click', async () => {
+      await api('/api/logout', { method: 'POST', body: {} });
+      location.href = '/';
+    });
+  </script>
+</body>
+</html>

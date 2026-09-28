@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Registrieren – b-cherregall</title>
+  <link rel="stylesheet" href="/style.css">
+</head>
+<body>
+  <header>
+    <a class="brand" href="/">📚 b-cherregall</a>
+    <nav><a href="/login">Anmelden</a></nav>
+  </header>
+  <main>
+    <form id="register" class="card narrow">
+      <h1>Konto erstellen</h1>
+      <label>Benutzername
+        <input name="username" required minlength="3" maxlength="32" pattern="[a-zA-Z0-9_.\-]+" autocomplete="username">
+      </label>
+      <label>E-Mail
+        <input name="email" type="email" required autocomplete="email">
+      </label>
+      <label>Anzeigename <small>(optional)</small>
+        <input name="displayName" maxlength="64" autocomplete="name">
+      </label>
+      <label>Passwort <small>(mind. 8 Zeichen)</small>
+        <input name="password" type="password" required minlength="8" autocomplete="new-password">
+      </label>
+      <label>Passwort wiederholen
+        <input name="passwordRepeat" type="password" required minlength="8" autocomplete="new-password">
+      </label>
+      <button type="submit">Registrieren</button>
+      <p class="message" role="alert"></p>
+      <p class="muted">Schon ein Konto? <a href="/login">Jetzt anmelden</a></p>
+    </form>
+  </main>
+  <script type="module">
+    import { api, handleForm, currentUser } from '/app.js';
+    if (await currentUser()) location.replace('/profile');
+    handleForm(document.getElementById('register'), async ({ passwordRepeat, ...data }) => {
+      if (data.password !== passwordRepeat) throw new Error('Die Passwörter stimmen nicht überein.');
+      await api('/api/register', { method: 'POST', body: data });
+      location.href = '/profile';
+    });
+  </script>
+</body>
+</html>

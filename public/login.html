@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Anmelden – b-cherregall</title>
+  <link rel="stylesheet" href="/style.css">
+</head>
+<body>
+  <header>
+    <a class="brand" href="/">📚 b-cherregall</a>
+    <nav><a href="/register">Registrieren</a></nav>
+  </header>
+  <main>
+    <form id="login" class="card narrow">
+      <h1>Anmelden</h1>
+      <label>Benutzername oder E-Mail
+        <input name="login" required autocomplete="username">
+      </label>
+      <label>Passwort
+        <input name="password" type="password" required autocomplete="current-password">
+      </label>
+      <button type="submit">Anmelden</button>
+      <p class="message" role="alert"></p>
+      <p class="muted">Noch kein Konto? <a href="/register">Jetzt registrieren</a></p>
+    </form>
+  </main>
+  <script type="module">
+    import { api, handleForm, currentUser } from '/app.js';
+    if (await currentUser()) location.replace('/profile');
+    handleForm(document.getElementById('login'), async (data) => {
+      await api('/api/login', { method: 'POST', body: data });
+      location.href = '/profile';
+    });
+  </script>
+</body>
+</html>

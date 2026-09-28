@@ -1,0 +1,32 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Bücherregal</title>
+  <meta name="description" content="Digitales Bücherregal für deine physischen Bücher">
+  <link rel="icon" href="icon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <header class="topbar">
+    <a class="brand" href="#/regal">
+      <img src="icon.svg" alt="" width="28" height="28">
+      <span>Bücherregal</span>
+    </a>
+    <nav class="nav" aria-label="Hauptnavigation">
+      <a href="#/regal" data-nav="regal">Regal</a>
+      <a href="#/statistik" data-nav="statistik">Statistik</a>
+      <a href="#/empfehlungen" data-nav="empfehlungen">Empfehlungen</a>
+      <a href="#/einstellungen" data-nav="einstellungen" aria-label="Einstellungen" title="Einstellungen">⚙</a>
+    </nav>
+    <a href="#/hinzufuegen" class="btn btn-primary nav-add">+ Buch</a>
+  </header>
+
+  <main id="view" tabindex="-1"></main>
+
+  <div id="toast" class="toast" role="status" aria-live="polite"></div>
+
+  <script type="module" src="js/app.js"></script>
+</body>
+</html>

@@ -1,6 +1,7 @@
 import express from 'express';
 import { createHash, randomBytes } from 'node:crypto';
 import { hashPassword, verifyPassword } from './passwords.js';
+import { friendRoutes } from './friends.js';
 
 const SESSION_TTL_MS = 90 * 24 * 60 * 60 * 1000;
 const USERNAME_RE = /^[a-zA-Z0-9_.-]{3,32}$/;
@@ -17,6 +18,7 @@ function publicUser(row) {
     email: row.email,
     displayName: row.display_name,
     bio: row.bio,
+    discoverable: row.discoverable,
     createdAt: row.created_at,
   };
 }
@@ -167,14 +169,16 @@ export function createApp(db, { allowedOrigins = [] } = {}) {
   });
 
   app.put('/api/me', requireAuth, async (req, res) => {
-    const { displayName, bio } = req.body ?? {};
+    const { displayName, bio, discoverable } = req.body ?? {};
     const name = typeof displayName === 'string' && displayName.trim()
       ? displayName.trim().slice(0, 64)
       : req.user.display_name;
     const about = typeof bio === 'string' ? bio.slice(0, 1000) : req.user.bio;
+    const findable = typeof discoverable === 'boolean' ? discoverable : req.user.discoverable;
     const { rows } = await db.query(
-      'UPDATE users SET display_name = $1, bio = $2, updated_at = now() WHERE id = $3 RETURNING *',
-      [name, about, req.user.id],
+      `UPDATE users SET display_name = $1, bio = $2, discoverable = $3, updated_at = now()
+       WHERE id = $4 RETURNING *`,
+      [name, about, findable, req.user.id],
     );
     res.json({ user: publicUser(rows[0]) });
   });
@@ -222,6 +226,8 @@ export function createApp(db, { allowedOrigins = [] } = {}) {
     );
     res.json({ updatedAt: rows[0].updated_at });
   });
+
+  friendRoutes(app, db, requireAuth);
 
   app.use((_req, res) => res.status(404).json({ error: 'Nicht gefunden.' }));
 

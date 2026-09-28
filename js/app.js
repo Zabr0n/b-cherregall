@@ -10,6 +10,8 @@ import * as stats from './views/stats.js';
 import * as recs from './views/recs.js';
 import * as settings from './views/settings.js';
 import * as account from './views/account.js';
+import * as friends from './views/friends.js';
+import { initFriends, onIncomingChange } from './friends.js';
 import { initAccount, getUser, onAccountChange } from './account.js';
 
 const routes = {
@@ -20,6 +22,7 @@ const routes = {
   empfehlungen: recs,
   einstellungen: settings,
   konto: account,
+  freunde: friends,
 };
 
 const TITLES = {
@@ -30,6 +33,7 @@ const TITLES = {
   empfehlungen: 'Empfehlungen',
   einstellungen: 'Einstellungen',
   konto: 'Konto',
+  freunde: 'Freunde',
 };
 
 let cleanup = null;
@@ -59,10 +63,18 @@ function updateAccountNav() {
 onAccountChange(updateAccountNav);
 updateAccountNav();
 
+// Abzeichen mit offenen Freundschaftsanfragen.
+onIncomingChange((n) => {
+  const badge = $('#friend-badge');
+  badge.textContent = n;
+  badge.hidden = !n;
+});
+
 window.addEventListener('hashchange', route);
 window.addEventListener('library:replaced', route);
 route();
 initAccount();
+initFriends();
 
 // Fehlende Cover für neue und bestehende Bücher im Hintergrund nachladen.
 subscribe((state) => ensureCovers(state.books));

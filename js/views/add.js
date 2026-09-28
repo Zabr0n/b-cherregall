@@ -1,11 +1,15 @@
-import { addBook, findDuplicate, STATUS, FORMATS } from '../store.js';
+import { addBook, findDuplicate, getState, STATUS, FORMATS } from '../store.js';
+import { isLoggedIn } from '../account.js';
 import { lookupIsbn, searchBooks, normalizeIsbn, isValidIsbn } from '../api.js';
 import { $, $$, esc, coverHtml, authorsText, toast } from '../ui.js';
 
 let tab = 'isbn';
+// Gilt für alle Bücher, die auf dieser Seite hinzugefügt werden (Standard aus den Freunde-Einstellungen).
+let shareNew = true;
 const canScan = 'BarcodeDetector' in window && !!navigator.mediaDevices?.getUserMedia;
 
 export function render(main) {
+  shareNew = getState().settings.shareByDefault !== false;
   main.innerHTML = `
     <section class="page narrow">
       <h1>Buch hinzufügen</h1>
@@ -14,6 +18,10 @@ export function render(main) {
         <button role="tab" class="tab" data-tab="search">Titelsuche</button>
         <button role="tab" class="tab" data-tab="manual">Manuell</button>
       </div>
+      ${isLoggedIn() ? `<label class="check share-toggle">
+        <input type="checkbox" id="share-new" ${shareNew ? 'checked' : ''}>
+        <span>👥 Für Freunde sichtbar <span class="muted small">– ausschalten, wenn das Buch nur dich etwas angeht</span></span>
+      </label>` : ''}
       <div id="panel"></div>
     </section>`;
 
@@ -33,6 +41,7 @@ export function render(main) {
   };
   $$('[data-tab]', main).forEach((b) => b.addEventListener('click', () => show(b.dataset.tab)));
   show(tab);
+  $('#share-new', main)?.addEventListener('change', (e) => (shareNew = e.target.checked));
 
   return () => stopScan?.();
 }
@@ -170,7 +179,7 @@ function preview(container, book) {
       </div>
     </div>`;
   $('#add', container).addEventListener('click', () => {
-    const saved = addBook({ ...book, status: $('[name=status]', container).value, format: $('[name=format]', container).value });
+    const saved = addBook({ ...book, status: $('[name=status]', container).value, format: $('[name=format]', container).value, friendsVisible: shareNew });
     toast(`„${saved.title}“ hinzugefügt`);
     location.hash = `#/buch/${saved.id}`;
   });
@@ -221,7 +230,7 @@ function searchPanel(panel) {
       $$('[data-add]', out).forEach((btn) =>
         btn.addEventListener('click', () => {
           const book = results[+btn.dataset.add];
-          const saved = addBook({ ...book, status: btn.dataset.status });
+          const saved = addBook({ ...book, status: btn.dataset.status, friendsVisible: shareNew });
           toast(`„${saved.title}“ → ${STATUS[saved.status]}`);
           if (saved.status === 'read') location.hash = `#/buch/${saved.id}`;
           else btn.closest('.result-actions').innerHTML = `<a class="btn btn-sm" href="#/buch/${saved.id}">Öffnen</a>`;
@@ -269,6 +278,7 @@ function manualPanel(panel) {
       pages: +f.get('pages') || null,
       subjects: list(f.get('subjects')).map((s) => s.toLowerCase()),
       status: f.get('status'),
+      friendsVisible: shareNew,
     });
     toast(`„${saved.title}“ hinzugefügt`);
     location.hash = `#/buch/${saved.id}`;

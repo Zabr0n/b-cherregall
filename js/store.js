@@ -4,7 +4,7 @@ const KEY = 'buecherregal.v1';
 
 const DEFAULTS = {
   books: [],
-  settings: { yearlyGoal: 24, germanRecs: false },
+  settings: { yearlyGoal: 24, germanRecs: false, shareByDefault: true },
   dismissed: [], // Empfehlungen, die mit „Kein Interesse“ ausgeblendet wurden
 };
 
@@ -85,9 +85,13 @@ export function normalizeBook(data) {
     location: '',
     format: '',
     lentTo: '',
+    friendsVisible: state?.settings?.shareByDefault !== false, // Freunde dürfen das Buch sehen
     ...data,
   };
 }
+
+/** Bücher ohne Angabe (von vor der Freunde-Funktion) gelten als sichtbar. */
+export const isFriendsVisible = (b) => b.friendsVisible !== false;
 
 export function addBook(data) {
   const book = normalizeBook(data);
@@ -125,6 +129,12 @@ export function findDuplicate(candidate) {
       (candidate.workKey && b.workKey && b.workKey === candidate.workKey) ||
       bookKey(b) === key,
   );
+}
+
+/** Setzt die Sichtbarkeit für Freunde bei allen Büchern auf einmal. */
+export function setAllFriendsVisible(visible) {
+  state.books.forEach((b) => (b.friendsVisible = visible));
+  save();
 }
 
 export function updateSettings(patch) {

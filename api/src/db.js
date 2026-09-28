@@ -27,6 +27,22 @@ export async function connect(connectionString) {
     );
     CREATE INDEX IF NOT EXISTS sessions_user ON sessions (user_id);
 
+    -- Ob man in der Nutzersuche auftaucht (über exakten Benutzernamen/E-Mail immer auffindbar).
+    ALTER TABLE users ADD COLUMN IF NOT EXISTS discoverable BOOLEAN NOT NULL DEFAULT TRUE;
+
+    -- Freundschaften: erst Anfrage (pending), nach Annahme accepted. Pro Paar nur eine Zeile.
+    CREATE TABLE IF NOT EXISTS friendships (
+      requester_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+      addressee_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+      status       TEXT NOT NULL CHECK (status IN ('pending', 'accepted')),
+      created_at   TIMESTAMPTZ NOT NULL DEFAULT now(),
+      PRIMARY KEY (requester_id, addressee_id),
+      CHECK (requester_id <> addressee_id)
+    );
+    CREATE UNIQUE INDEX IF NOT EXISTS friendships_pair
+      ON friendships (LEAST(requester_id, addressee_id), GREATEST(requester_id, addressee_id));
+    CREATE INDEX IF NOT EXISTS friendships_addressee ON friendships (addressee_id);
+
     -- Die komplette Bibliothek (Bücher, Einstellungen, …) eines Nutzers als JSON.
     CREATE TABLE IF NOT EXISTS libraries (
       user_id    INTEGER PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE,

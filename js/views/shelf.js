@@ -1,4 +1,5 @@
-import { getState, addBook, STATUS } from '../store.js';
+import { getState, addBook, isFriendsVisible, STATUS } from '../store.js';
+import { isLoggedIn } from '../account.js';
 import { $, $$, esc, coverHtml, starsHtml, authorsText, formatDate, toast } from '../ui.js';
 import { DEMO_BOOKS } from '../demo.js';
 
@@ -117,6 +118,7 @@ function draw() {
   const filterFn = FILTERS.find(([k]) => k === ui.filter)[2];
   const list = books.filter(filterFn).filter((b) => matches(b, ui.q)).sort(SORTS[ui.sort][1]);
   const el = $('#shelf');
+  const lock = (b) => (isLoggedIn() && !isFriendsVisible(b) ? '<span class="private" title="Nur für dich sichtbar" aria-label="privat">🔒</span>' : '');
 
   if (!list.length) {
     el.innerHTML = `<p class="muted pad">Keine Bücher gefunden.</p>`;
@@ -128,7 +130,7 @@ function draw() {
       <a class="list-row" href="#/buch/${b.id}">
         ${coverHtml(b, 'cover-xs')}
         <div class="list-main">
-          <strong>${esc(b.title)}</strong>
+          <strong>${esc(b.title)} ${lock(b)}</strong>
           <span class="muted">${esc(authorsText(b))}${b.year ? ` · ${b.year}` : ''}</span>
         </div>
         <span class="badge badge-${b.status}">${STATUS[b.status]}</span>
@@ -146,7 +148,7 @@ function draw() {
         ${b.lentTo ? `<span class="lent" title="Verliehen an ${esc(b.lentTo)}">↗ ${esc(b.lentTo)}</span>` : ''}
       </div>
       <div class="book-meta">
-        <span class="book-title">${esc(b.title)}</span>
+        <span class="book-title">${lock(b)}${esc(b.title)}</span>
         <span class="book-author">${esc(authorsText(b))}</span>
         ${b.rating ? starsHtml(b.rating, { size: 'sm' }) : b.status === 'wishlist' ? '<span class="badge badge-wishlist">Wunschliste</span>' : ''}
       </div>

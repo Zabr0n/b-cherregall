@@ -53,6 +53,19 @@ API im Ordner `api/` (Node.js + PostgreSQL), die auf [Railway](https://railway.c
 Passwörter werden nur als scrypt-Hash gespeichert. Die Anmeldung läuft über ein Token
 (90 Tage gültig), von dem der Server nur einen Hash speichert.
 
+### Freunde
+
+Unter **Freunde** (`#/freunde`) sucht man andere Nutzer (Benutzername, Anzeigename oder E-Mail),
+schickt Freundschaftsanfragen und sieht nach dem Annehmen das Regal der Freunde mit Status,
+Bewertungen und Rezensionen. Bücher von Freunden lassen sich mit einem Klick auf die eigene
+Wunschliste setzen.
+
+- Jedes Buch hat einen Schalter **„Für Freunde sichtbar“** (beim Hinzufügen und auf der Buchseite).
+  Private Bücher sind im eigenen Regal mit 🔒 markiert und werden vom Server nie an Freunde ausgeliefert.
+- Standort und „verliehen an“ sehen Freunde nie.
+- In den Freunde-Einstellungen: Standard für neue Bücher, alle Bücher auf einmal umstellen und
+  ob man in der Suche auftaucht (über den genauen Benutzernamen oder die E-Mail ist man immer auffindbar).
+
 ### API auf Railway einrichten
 
 1. In Railway ein neues Projekt anlegen → **Deploy from GitHub repo** → dieses Repo wählen.
@@ -89,6 +102,7 @@ css/style.css       Gestaltung (Hell/Dunkel automatisch)
 js/app.js           Hash-Router
 js/store.js         Datenmodell & Persistenz (localStorage)
 js/account.js       Konto & Synchronisierung mit der API
+js/friends.js       Freunde-API (Suche, Anfragen, Regale von Freunden)
 js/config.js        Adresse der API
 js/api.js           Open Library / Google Books, ISBN-Prüfung
 js/recommend.js     Geschmacksprofil & Empfehlungen

@@ -1,4 +1,5 @@
-import { getState, getBook, updateBook, removeBook, today, STATUS, FORMATS } from '../store.js';
+import { getState, getBook, updateBook, removeBook, today, isFriendsVisible, STATUS, FORMATS } from '../store.js';
+import { isLoggedIn } from '../account.js';
 import { $, $$, esc, coverHtml, starsHtml, authorsText, toast } from '../ui.js';
 import { cleanSubjects, findCover, editionCovers } from '../api.js';
 import { refresh as refreshCover } from '../covers.js';
@@ -81,6 +82,12 @@ export function render(main, id) {
             </label>
           </div>
 
+          ${isLoggedIn() ? `<label class="check share-toggle">
+            <input type="checkbox" id="friends-visible" ${isFriendsVisible(b) ? 'checked' : ''}>
+            <span>👥 Für Freunde sichtbar <span class="muted small">– Freunde sehen Titel, Status, Bewertung und Rezension,
+              aber nicht Standort und „verliehen an“</span></span>
+          </label>` : ''}
+
           <label class="field">
             <span class="label">Genres &amp; Schlagwörter <span class="muted">(kommagetrennt – fließen in die Empfehlungen ein)</span></span>
             <input name="subjects" value="${esc((b.subjects || []).join(', '))}" placeholder="fantasy, magic, …">
@@ -156,6 +163,11 @@ export function render(main, id) {
     const rating = b.rating === r ? 0 : r;
     save({ rating });
     $('#rating', main).innerHTML = starsHtml(rating, { interactive: true, size: 'lg' });
+  });
+
+  $('#friends-visible', main)?.addEventListener('change', (e) => {
+    save({ friendsVisible: e.target.checked });
+    toast(e.target.checked ? 'Für Freunde sichtbar' : '🔒 Nur für dich sichtbar');
   });
 
   // Rezension mit Zeichenzähler, gespeichert nach kurzer Tipppause.

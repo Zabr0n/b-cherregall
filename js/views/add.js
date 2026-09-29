@@ -6,20 +6,17 @@ import { $, $$, esc, coverHtml, authorsText, toast } from '../ui.js';
 let tab = 'isbn';
 // Gilt für alle Bücher, die auf dieser Seite hinzugefügt werden (Standard aus den Freunde-Einstellungen).
 let shareNew = true;
-// Kamera reicht: Wo der Browser keinen eigenen BarcodeDetector hat (z. B. Safari auf dem iPhone),
-// wird beim ersten Scan die mitgelieferte Erkennung aus js/vendor/ nachgeladen.
+// Kamera reicht: Wo der Browser keine verlässliche eigene Barcode-Erkennung hat (z. B. Safari auf
+// dem iPhone), wird beim ersten Scan die mitgelieferte Erkennung aus js/vendor/ nachgeladen.
 const canScan = !!navigator.mediaDevices?.getUserMedia;
 const EAN_FORMATS = ['ean_13', 'ean_8', 'upc_a'];
+// Safari meldet inzwischen einen eigenen BarcodeDetector, der bei Kamerabildern aber nichts findet.
+// Die eingebaute Erkennung daher nur in Chrome/Chromium außerhalb von iOS nutzen.
+const trustNative = /Chrome\/|Chromium\//.test(navigator.userAgent) && !/iPhone|iPad|iPod/.test(navigator.userAgent);
 
-let detectorPromise = null;
-function getDetector() {
-  detectorPromise ??= (async () => {
-    if ('BarcodeDetector' in window) {
-      try {
-        const supported = await BarcodeDetector.getSupportedFormats();
-        if (supported.includes('ean_13')) return new BarcodeDetector({ formats: EAN_FORMATS.filter((f) => supported.includes(f)) });
-      } catch { /* dann die mitgelieferte Erkennung */ }
-    }
+let fallbackPromise = null;
+function getFallbackDetector() {
+  fallbackPromise ??= (async () => {
     const { BarcodeDetector: Fallback, prepareZXingModule } = await import('../vendor/barcode-detector.js');
     const wasm = new URL('../vendor/zxing_reader.wasm', import.meta.url).href;
     await prepareZXingModule({
@@ -28,10 +25,50 @@ function getDetector() {
     });
     return new Fallback({ formats: EAN_FORMATS });
   })().catch((e) => {
-    detectorPromise = null; // beim nächsten Versuch erneut laden
+    fallbackPromise = null; // beim nächsten Versuch erneut laden
     throw e;
   });
-  return detectorPromise;
+  return fallbackPromise;
+}
+
+async function getDetector() {
+  if (trustNative && 'BarcodeDetector' in window) {
+    try {
+      const supported = await BarcodeDetector.getSupportedFormats();
+      if (supported.includes('ean_13')) {
+        const native = new BarcodeDetector({ formats: EAN_FORMATS.filter((f) => supported.includes(f)) });
+        native.isNative = true;
+        return native;
+      }
+    } catch { /* dann die mitgelieferte Erkennung */ }
+  }
+  return getFallbackDetector();
+}
+
+const isbnFrom = (codes) =>
+  codes.map((c) => c.rawValue).find((v) => /^97[89]/.test(v) && isValidIsbn(normalizeIsbn(v)));
+
+/** Sucht in einem Bild (Foto) nach einer ISBN – auch um 90° gedreht. */
+async function isbnFromImage(file) {
+  const bitmap = await createImageBitmap(file);
+  const detector = await getFallbackDetector();
+  const scale = Math.min(1, 2000 / Math.max(bitmap.width, bitmap.height));
+  for (const rotate of [false, true]) {
+    const w = Math.round(bitmap.width * scale);
+    const h = Math.round(bitmap.height * scale);
+    const canvas = document.createElement('canvas');
+    canvas.width = rotate ? h : w;
+    canvas.height = rotate ? w : h;
+    const g = canvas.getContext('2d');
+    if (rotate) {
+      g.translate(h, 0);
+      g.rotate(Math.PI / 2);
+    }
+    g.drawImage(bitmap, 0, 0, w, h);
+    const hit = isbnFrom(await detector.detect(canvas));
+    if (hit) return hit;
+  }
+  return null;
 }
 
 export function render(main) {
@@ -87,6 +124,8 @@ function isbnPanel(panel) {
       </label>
       ${canScan ? '' : '<p class="muted small">Tipp: Auf dem Smartphone kannst du den Barcode auf der Buchrückseite direkt mit der Kamera scannen.</p>'}
       <p class="muted small scan-status" hidden></p>
+      <label class="small photo-scan">📸 <span class="link">Oder: Foto vom Barcode aufnehmen</span>
+        <input type="file" id="scan-photo" accept="image/*" capture="environment" hidden></label>
       <div class="scanner" hidden><video playsinline muted></video><div class="scan-line"></div>
         <button type="button" class="btn" id="scan-stop">Scannen beenden</button></div>
     </form>
@@ -150,7 +189,7 @@ function isbnPanel(panel) {
         if (mine !== attempt) return;
         box.hidden = false;
         status.textContent = 'Halte den Barcode auf der Buchrückseite vor die Kamera.';
-        const started = await startScanner(video, detector, (code) => {
+        const started = await startScanner(video, detector, status, (code) => {
           stop();
           input.value = code;
           navigator.vibrate?.(80);
@@ -166,12 +205,41 @@ function isbnPanel(panel) {
       }
     });
     $('#scan-stop', form).addEventListener('click', stop);
-    return stop;
   }
+
+  // Foto statt Live-Bild: Die Kamera-App stellt selbst scharf – auf iPhones oft am zuverlässigsten.
+  const photo = $('#scan-photo', form);
+  photo.addEventListener('change', async () => {
+    const file = photo.files[0];
+    photo.value = '';
+    if (!file) return;
+    $('#scan-stop', form)?.click(); // laufenden Live-Scan beenden
+    const status = $('.scan-status', form);
+    status.textContent = 'Foto wird ausgewertet …';
+    status.hidden = false;
+    try {
+      const code = await isbnFromImage(file);
+      status.hidden = true;
+      if (!code) {
+        toast('Kein Barcode erkannt – versuch ein schärferes Foto oder tipp die ISBN ein');
+        return;
+      }
+      input.value = code;
+      run(code);
+    } catch (e) {
+      console.error(e);
+      status.hidden = true;
+      toast('Das Foto konnte nicht ausgewertet werden');
+    }
+  });
+
+  return () => scanner?.stop();
 }
 
-async function startScanner(video, detector, onCode) {
-  const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
+async function startScanner(video, detector, status, onCode) {
+  const stream = await navigator.mediaDevices.getUserMedia({
+    video: { facingMode: { ideal: 'environment' }, width: { ideal: 1920 }, height: { ideal: 1080 } },
+  });
   video.srcObject = stream;
   try {
     await video.play();
@@ -179,15 +247,50 @@ async function startScanner(video, detector, onCode) {
     stream.getTracks().forEach((t) => t.stop());
     throw e;
   }
+  // Dauer-Autofokus, wo der Browser das anbietet (sonst bleibt das Bild bei Nahaufnahmen unscharf).
+  stream.getVideoTracks()[0]?.applyConstraints({ advanced: [{ focusMode: 'continuous' }] }).catch(() => {});
+
+  // Nur den mittleren Bereich um die rote Linie auswerten: schneller und weniger Störungen.
+  const canvas = document.createElement('canvas');
+  const g = canvas.getContext('2d', { willReadFrequently: true });
+  const frame = () => {
+    const vw = video.videoWidth;
+    const vh = video.videoHeight;
+    if (!vw || !vh) return null;
+    const sw = Math.round(vw * 0.9);
+    const sh = Math.round(vh * 0.6);
+    const scale = Math.min(1, 1280 / sw);
+    canvas.width = Math.round(sw * scale);
+    canvas.height = Math.round(sh * scale);
+    g.drawImage(video, (vw - sw) / 2, (vh - sh) / 2, sw, sh, 0, 0, canvas.width, canvas.height);
+    return canvas;
+  };
+
   let alive = true;
+  let failures = 0;
   const tick = async () => {
     if (!alive) return;
     try {
-      const codes = await detector.detect(video);
-      const hit = codes.find((c) => isValidIsbn(normalizeIsbn(c.rawValue)) && /^97[89]/.test(c.rawValue));
-      if (hit) return onCode(hit.rawValue);
-    } catch { /* nächster Frame */ }
-    setTimeout(tick, 200);
+      const image = frame();
+      if (image) {
+        const hit = isbnFrom(await detector.detect(image));
+        if (hit) return onCode(hit);
+        failures = 0;
+      }
+    } catch (e) {
+      // Streikt die eingebaute Erkennung, auf die mitgelieferte umschalten.
+      if (++failures === 5 && detector.isNative) {
+        console.warn('Eingebaute Barcode-Erkennung fehlgeschlagen, nutze Ersatz', e);
+        try {
+          detector = await getFallbackDetector();
+          failures = 0;
+        } catch { /* weiter versuchen */ }
+      } else if (failures === 20) {
+        console.error('Barcode-Erkennung fehlgeschlagen', e);
+        status.textContent = 'Die Live-Erkennung klappt auf diesem Gerät nicht – nimm stattdessen ein Foto vom Barcode auf.';
+      }
+    }
+    setTimeout(tick, 150);
   };
   tick();
   return {

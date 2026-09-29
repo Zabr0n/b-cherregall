@@ -306,6 +306,7 @@ textarea { resize: vertical; line-height: 1.5; }
 .result { display: flex; gap: 1rem; align-items: center; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: .6rem .8rem; }
 .result .grow { display: flex; flex-direction: column; }
 .result-actions { display: flex; gap: .35rem; flex-wrap: wrap; justify-content: flex-end; }
+.photo-scan { display: inline-block; margin: .2rem 0 .4rem; cursor: pointer; color: var(--muted); }
 .scanner { position: relative; margin-top: 1rem; border-radius: var(--radius); overflow: hidden; background: #000; }
 .scanner video { width: 100%; display: block; max-height: 50vh; object-fit: cover; }
 .scanner .scan-line { position: absolute; left: 10%; right: 10%; top: 50%; height: 2px; background: #ff4d4d; box-shadow: 0 0 10px #ff4d4d; animation: scan 1.6s ease-in-out infinite alternate; }
@@ -527,6 +528,9 @@ button.book { background: none; border: 0; padding: 0; font: inherit; color: inh
   .tl-date { position: static; display: block; text-align: left; width: auto; padding-left: .5rem; }
   .taste-row { flex-direction: column; gap: 0; }
   .friend-head { align-items: flex-start; }
+  #isbn-form .row { flex-wrap: wrap; }
+  #isbn-form .row input { flex: 1 1 100%; }
+  #isbn-form .row .btn { flex: 1 1 auto; }
   .hero { grid-template-columns: 1fr; gap: 2rem; padding-top: .5rem; }
   .spines { height: 190px; gap: 4px; }
   .spine { width: 34px; }

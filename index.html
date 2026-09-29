@@ -4,13 +4,16 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Bücherregal</title>
-  <meta name="description" content="Digitales Bücherregal für deine physischen Bücher">
+  <meta name="description" content="Dein digitales Bücherregal: gedruckte Bücher per Barcode erfassen, bewerten, Rezensionen schreiben, Lesestatistik und Empfehlungen – und sehen, was deine Freunde lesen.">
+  <meta property="og:title" content="Bücherregal – dein digitales Bücherregal">
+  <meta property="og:description" content="Bücher erfassen, bewerten und mit Freunden teilen.">
+  <meta property="og:url" content="https://buchbrett.de/">
   <link rel="icon" href="icon.svg" type="image/svg+xml">
   <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
   <header class="topbar">
-    <a class="brand" href="#/regal">
+    <a class="brand" href="#/">
       <img src="icon.svg" alt="" width="28" height="28">
       <span>Bücherregal</span>
     </a>
@@ -26,6 +29,12 @@
   </header>
 
   <main id="view" tabindex="-1"></main>
+
+  <footer class="site-footer">
+    <a href="#/start">Über Bücherregal</a>
+    <span aria-hidden="true">·</span>
+    <span>Buchdaten von <a href="https://openlibrary.org" target="_blank" rel="noopener">Open Library</a></span>
+  </footer>
 
   <div id="toast" class="toast" role="status" aria-live="polite"></div>
 

@@ -11,8 +11,9 @@ import * as recs from './views/recs.js';
 import * as settings from './views/settings.js';
 import * as account from './views/account.js';
 import * as friends from './views/friends.js';
+import * as start from './views/start.js';
 import { initFriends, onIncomingChange } from './friends.js';
-import { initAccount, getUser, onAccountChange } from './account.js';
+import { initAccount, getUser, isLoggedIn, onAccountChange } from './account.js';
 
 const routes = {
   regal: shelf,
@@ -23,6 +24,7 @@ const routes = {
   einstellungen: settings,
   konto: account,
   freunde: friends,
+  start,
 };
 
 const TITLES = {
@@ -34,14 +36,17 @@ const TITLES = {
   einstellungen: 'Einstellungen',
   konto: 'Konto',
   freunde: 'Freunde',
+  start: 'Willkommen',
 };
 
 let cleanup = null;
 let current = '';
 
 function route() {
-  const [name = 'regal', ...params] = location.hash.replace(/^#\/?/, '').split('/').map(decodeURIComponent);
-  const view = routes[name] ? name : 'regal';
+  const [name, ...params] = location.hash.replace(/^#\/?/, '').split('/').map(decodeURIComponent);
+  // Ohne Ziel: Wer schon Bücher oder ein Konto hat, landet im Regal, alle anderen auf der Startseite.
+  const home = isLoggedIn() || getState().books.length ? 'regal' : 'start';
+  const view = routes[name] ? name : home;
   const main = $('#view');
 
   if (typeof cleanup === 'function') cleanup();

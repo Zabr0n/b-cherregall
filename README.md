@@ -99,14 +99,14 @@ Tests der API (brauchen eine leere Test-Datenbank):
 ```
 index.html          App-Hülle und Navigation
 css/style.css       Gestaltung (Hell/Dunkel automatisch)
-js/app.js           Hash-Router
+js/app.js           Hash-Router (ohne Ziel: Startseite für Neue, sonst Regal)
 js/store.js         Datenmodell & Persistenz (localStorage)
 js/account.js       Konto & Synchronisierung mit der API
 js/friends.js       Freunde-API (Suche, Anfragen, Regale von Freunden)
 js/config.js        Adresse der API
 js/api.js           Open Library / Google Books, ISBN-Prüfung
 js/recommend.js     Geschmacksprofil & Empfehlungen
-js/views/*.js       Regal, Buch, Hinzufügen, Statistik, Empfehlungen, Einstellungen
+js/views/*.js       Startseite, Regal, Buch, Hinzufügen, Statistik, Empfehlungen, Einstellungen
 server.js           Minimaler statischer Server für `npm start`
 api/                Konto-API für Railway (Express + PostgreSQL)
 ```

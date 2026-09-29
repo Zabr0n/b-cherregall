@@ -15,7 +15,8 @@ const STATUS_TEXT = {
   error: 'Synchronisierung fehlgeschlagen. Deine Daten sind lokal noch vorhanden.',
 };
 
-export function render(main) {
+export function render(main, sub) {
+  if (sub === 'registrieren') tab = 'register';
   const draw = () => (isLoggedIn() ? profileView : authView)(main);
   draw();
   // Status-Zeile live aktualisieren; bei An-/Abmelden neu zeichnen.

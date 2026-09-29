@@ -1,4 +1,4 @@
-// Buchdaten von Open Library (mit Google Books als Fallback für ISBN-Suche).
+// Buchdaten von Open Library, der Deutschen Nationalbibliothek (ISBN-Suche) und Google Books.
 
 const OL = 'https://openlibrary.org';
 const FIELDS = 'key,title,subtitle,author_name,first_publish_year,cover_i,subject,isbn,number_of_pages_median,publisher,ratings_average,ratings_count';
@@ -46,13 +46,19 @@ const parseYear = (s) => {
   return m ? +m[0] : null;
 };
 
-async function getJSON(url, { timeout = 12000 } = {}) {
+async function getJSON(url, opts) {
+  return (await getResponse(url, opts)).json();
+}
+
+async function getResponse(url, { timeout = 12000 } = {}) {
   const ctrl = new AbortController();
   const t = setTimeout(() => ctrl.abort(), timeout);
   try {
     const res = await fetch(url, { signal: ctrl.signal });
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
-    return await res.json();
+    // Body mitlesen, solange der Timeout noch greift.
+    const body = await res.text();
+    return { json: () => JSON.parse(body), text: () => body };
   } finally {
     clearTimeout(t);
   }
@@ -121,6 +127,66 @@ async function googleBooks(isbn) {
   };
 }
 
+// ---------- Deutsche Nationalbibliothek ----------
+// Kennt praktisch jedes in Deutschland erschienene Buch – auch ganz neue, die Open Library und
+// Google Books (noch) nicht haben. Die SRU-Schnittstelle ist frei und erlaubt Browser-Anfragen (CORS).
+
+const DNB = 'https://services.dnb.de/sru/dnb';
+// Gattungsbegriffe der DNB, die als Schlagwort nichts über das Buch aussagen.
+const DNB_GENERIC = /^(fiktionale darstellung|erzählende literatur|belletristische darstellung|text)$/i;
+
+/** Liest einen DNB-Datensatz (MARC21-XML) in unser Buchformat. */
+export function parseDnbRecord(xml) {
+  const doc = new DOMParser().parseFromString(xml, 'application/xml');
+  const record = [...doc.getElementsByTagName('record')].find((r) => r.getElementsByTagName('datafield').length);
+  if (!record) return null;
+
+  // Steuer- und Sortierzeichen (z. B. „¬Das¬ Parfum“), Wortverbinder und Satzzeichen am Ende entfernen.
+  const clean = (v) => String(v || '').replace(/[\u0098\u009c\u2060\u200b]/g, '').replace(/\s+/g, ' ').replace(/\s*[/:;,]\s*$/, '').trim();
+  const fields = (tag) => [...record.getElementsByTagName('datafield')].filter((f) => f.getAttribute('tag') === tag);
+  const sub = (field, code) => clean([...field.getElementsByTagName('subfield')].find((s) => s.getAttribute('code') === code)?.textContent);
+  const all = (tag, code) => fields(tag).map((f) => sub(f, code)).filter(Boolean);
+  const first = (tag, code) => all(tag, code)[0] || '';
+  // „Nachname, Vorname“ → „Vorname Nachname“
+  const person = (name) => name.replace(/^([^,]+),\s*(.+)$/, '$2 $1');
+
+  const title = first('245', 'a');
+  if (!title) return null;
+  const subtitle = first('245', 'b');
+  const authors = [
+    ...all('100', 'a'),
+    ...fields('700').filter((f) => sub(f, '4') === 'aut').map((f) => sub(f, 'a')),
+  ].map(person);
+  const control008 = [...record.getElementsByTagName('controlfield')].find((f) => f.getAttribute('tag') === '008')?.textContent || '';
+  const pages = (first('300', 'a').match(/(\d+)\s*(?:Seiten|S\.|p\.?)/) || [])[1];
+
+  return {
+    title: subtitle ? `${title}: ${subtitle}` : title,
+    authors: [...new Set(authors)],
+    publisher: first('264', 'b') || first('260', 'b'),
+    year: parseYear(first('264', 'c') || first('260', 'c')) || parseYear(control008.slice(7, 11)),
+    pages: pages ? +pages : null,
+    subjects: cleanSubjects([
+      ...all('926', 'x'), // Warengruppe des Verlags, z. B. „Dark Romance“
+      ...all('650', 'a'),
+      ...all('653', 'a').filter((v) => !v.startsWith('(')), // „(Produktform)…“ usw. auslassen
+      ...all('655', 'a'),
+    ].filter((v) => !DNB_GENERIC.test(v))),
+  };
+}
+
+async function dnbBook(isbn) {
+  const params = new URLSearchParams({
+    version: '1.1',
+    operation: 'searchRetrieve',
+    query: `num=${isbn}`,
+    recordSchema: 'MARC21-xml',
+    maximumRecords: '1',
+  });
+  const res = await getResponse(`${DNB}?${params}`);
+  return parseDnbRecord(res.text());
+}
+
 /**
  * Sucht ein Cover für ein Buch ohne Bild. Bevorzugt die deutsche Ausgabe
  * (Open Library liefert mit lang=de die passendste Ausgabe mit).
@@ -162,25 +228,27 @@ export async function editionCovers(workKey) {
 }
 
 /**
- * Sucht ein Buch per ISBN. Kombiniert Ausgabe-Daten (Seiten, Verlag) mit den
- * Werk-Daten (Schlagwörter, Werk-ID) und fällt auf Google Books zurück.
+ * Sucht ein Buch per ISBN. Kombiniert Open Library (Ausgabe und Werk) mit der Deutschen
+ * Nationalbibliothek und fällt auf Google Books zurück.
  */
 export async function lookupIsbn(rawIsbn) {
   const isbn = normalizeIsbn(rawIsbn);
-  const [edition, work] = (await Promise.allSettled([olEdition(isbn), olWork(isbn)])).map((r) =>
+  const [edition, work, dnb] = (await Promise.allSettled([olEdition(isbn), olWork(isbn), dnbBook(isbn)])).map((r) =>
     r.status === 'fulfilled' ? r.value : null,
   );
   let google = null;
-  if (!edition && !work) {
+  if (!edition && !work && !dnb) {
     google = await googleBooks(isbn).catch(() => null);
     if (!google) return null;
   }
-  const base = { ...(google || {}), ...(work || {}) };
-  const merged = { ...base };
-  for (const [k, v] of Object.entries(edition || {})) {
-    const empty = v == null || v === '' || (Array.isArray(v) && !v.length);
-    if (!empty && !(k === 'subjects' && base.subjects?.length)) merged[k] = v;
+  // Spätere Quellen gewinnen: Google < Open-Library-Werk < DNB (deutscher Titel, Verlag) < Open-Library-Ausgabe.
+  const empty = (v) => v == null || v === '' || (Array.isArray(v) && !v.length);
+  const merged = {};
+  for (const source of [google, work, dnb, edition]) {
+    for (const [k, v] of Object.entries(source || {})) if (!empty(v)) merged[k] = v;
   }
+  // Schlagwörter: die (englischen) von Open Library passen am besten zu den Empfehlungen.
+  merged.subjects = [work, edition, dnb, google].find((x) => x?.subjects?.length)?.subjects || [];
   merged.isbn = isbn;
   if (!merged.coverUrl) merged.coverUrl = coverByIsbn(isbn);
 

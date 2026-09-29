@@ -18,7 +18,7 @@ Danach http://localhost:8080 öffnen. Alternativ funktioniert jeder statische We
 
 - **Regal** – Cover-Ansicht auf Regalbrettern oder als Liste; Filter nach Gelesen, Lese ich,
   Ungelesen, Wunschliste und Verliehen; Suche über Titel, Autor:in, Genre und Standort.
-- **Bücher erfassen** – per ISBN (Daten und Cover von Open Library, Google Books als Fallback),
+- **Bücher erfassen** – per ISBN (Daten von Open Library und der Deutschen Nationalbibliothek, Cover von Open Library, Google Books als Fallback),
   per **Barcode-Scan** mit der Handykamera (alle aktuellen Handy-Browser inkl. Safari auf dem iPhone, braucht HTTPS), per Titelsuche oder manuell.
 - **Buchseite** – Lesestatus, 1–5 Sterne, Kurzrezension, Lesezeitraum, Standort im Regal,
   Format, „verliehen an“, Genres/Schlagwörter. Alles wird automatisch gespeichert.
@@ -104,7 +104,7 @@ js/store.js         Datenmodell & Persistenz (localStorage)
 js/account.js       Konto & Synchronisierung mit der API
 js/friends.js       Freunde-API (Suche, Anfragen, Regale von Freunden)
 js/config.js        Adresse der API
-js/api.js           Open Library / Google Books, ISBN-Prüfung
+js/api.js           Open Library / Deutsche Nationalbibliothek / Google Books, ISBN-Prüfung
 js/recommend.js     Geschmacksprofil & Empfehlungen
 js/views/*.js       Startseite, Regal, Buch, Hinzufügen, Statistik, Empfehlungen, Einstellungen
 js/vendor/           Barcode-Erkennung für Browser ohne eigenen BarcodeDetector (barcode-detector + zxing-wasm, siehe LICENSES.txt)

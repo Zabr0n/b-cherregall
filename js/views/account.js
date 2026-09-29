@@ -87,6 +87,8 @@ function authView(main) {
           <label class="field"><span class="label">Passwort wiederholen</span>
             <input name="passwordRepeat" type="password" required minlength="8" autocomplete="new-password"></label>
         </div>
+        <p class="small muted">Wie wir mit deinen Daten umgehen, steht in der
+          <a href="datenschutz.html" target="_blank" rel="noopener">Datenschutzerklärung</a>.</p>
         <button type="submit" class="btn btn-primary">Konto erstellen</button>
         <p class="form-msg error" role="alert"></p>
       </form>

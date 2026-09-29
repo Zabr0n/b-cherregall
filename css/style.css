@@ -495,6 +495,12 @@ button.book { background: none; border: 0; padding: 0; font: inherit; color: inh
   border-top: 1px solid var(--border); color: var(--muted); font-size: .88rem;
 }
 
+/* ===== Rechtliches ===== */
+.legal h2 { font-size: 1.2rem; margin-top: 1.8rem; }
+.legal p, .legal li { line-height: 1.6; }
+.legal ul { padding-left: 1.2rem; }
+.legal li { margin-bottom: .3rem; }
+
 /* ===== Mobil ===== */
 @media (max-width: 760px) {
   .topbar { flex-wrap: wrap; gap: .4rem; padding-block: .5rem; }

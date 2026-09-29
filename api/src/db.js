@@ -6,6 +6,9 @@ export async function connect(connectionString) {
     // Railways internes Netz (…railway.internal) braucht kein TLS, der öffentliche Proxy schon.
     ssl: process.env.PGSSL === 'true' ? { rejectUnauthorized: false } : undefined,
   });
+  // Bricht eine ruhende Verbindung weg (z. B. Neustart der Datenbank), nur protokollieren –
+  // der Pool baut beim nächsten Query eine neue auf. Ohne Handler würde der Prozess abstürzen.
+  pool.on('error', (err) => console.error('Datenbankverbindung unterbrochen:', err.message));
   await pool.query(`
     CREATE TABLE IF NOT EXISTS users (
       id            SERIAL PRIMARY KEY,

@@ -38,8 +38,9 @@ export function render(main) {
         </div>
       </div>
 
-      <p class="muted small">Buchdaten und Cover: <a href="https://openlibrary.org" target="_blank" rel="noopener">Open Library</a>
-        und Google Books.</p>
+      <p class="muted small">Buchdaten und Cover: <a href="https://openlibrary.org" target="_blank" rel="noopener">Open Library</a>,
+        <a href="https://www.dnb.de" target="_blank" rel="noopener">Deutsche Nationalbibliothek</a> und
+        <a href="https://books.google.com" target="_blank" rel="noopener">Google Books</a>.</p>
     </section>`;
 
   $('#goal', main).addEventListener('change', (e) => {

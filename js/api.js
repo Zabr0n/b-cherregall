@@ -124,6 +124,7 @@ async function googleBooks(isbn) {
     pages: v.pageCount || null,
     coverUrl: img.replace(/^http:/, 'https:'),
     subjects: cleanSubjects(v.categories),
+    googleLink: (v.infoLink || v.canonicalVolumeLink || '').replace(/^http:/, 'https:'),
   };
 }
 

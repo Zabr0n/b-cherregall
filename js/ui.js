@@ -60,3 +60,9 @@ export function formatDate(iso) {
 }
 
 export const MONTHS = ['Jan', 'Feb', 'Mär', 'Apr', 'Mai', 'Jun', 'Jul', 'Aug', 'Sep', 'Okt', 'Nov', 'Dez'];
+
+/** Quellenhinweis, wenn Buchdaten von Google Books stammen (Nutzungsbedingungen der Books API). */
+export const googleNote = (book) =>
+  book.googleLink
+    ? `<p class="small muted source-note">Daten: <a href="${esc(book.googleLink)}" target="_blank" rel="noopener">Google Books</a></p>`
+    : '';

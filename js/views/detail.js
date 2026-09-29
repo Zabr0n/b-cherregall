@@ -1,6 +1,6 @@
 import { getState, getBook, updateBook, removeBook, today, isFriendsVisible, STATUS, FORMATS } from '../store.js';
 import { isLoggedIn } from '../account.js';
-import { $, $$, esc, coverHtml, starsHtml, authorsText, toast } from '../ui.js';
+import { $, $$, esc, coverHtml, starsHtml, authorsText, toast, googleNote } from '../ui.js';
 import { cleanSubjects, findCover, editionCovers } from '../api.js';
 import { refresh as refreshCover } from '../covers.js';
 
@@ -28,6 +28,7 @@ export function render(main, id) {
             <dt>Im Regal seit</dt><dd>${new Date(b.addedAt).toLocaleDateString('de-DE')}</dd>
           </dl>
           ${b.workKey ? `<a class="small" href="https://openlibrary.org${esc(b.workKey)}" target="_blank" rel="noopener">Bei Open Library ansehen ↗</a>` : ''}
+          ${googleNote(b)}
         </aside>
 
         <div class="detail-main">

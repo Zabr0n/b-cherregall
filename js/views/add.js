@@ -1,7 +1,7 @@
 import { addBook, findDuplicate, getState, STATUS, FORMATS } from '../store.js';
 import { isLoggedIn } from '../account.js';
 import { lookupIsbn, searchBooks, normalizeIsbn, isValidIsbn } from '../api.js';
-import { $, $$, esc, coverHtml, authorsText, toast } from '../ui.js';
+import { $, $$, esc, coverHtml, authorsText, toast, googleNote } from '../ui.js';
 
 let tab = 'isbn';
 // Gilt für alle Bücher, die auf dieser Seite hinzugefügt werden (Standard aus den Freunde-Einstellungen).
@@ -312,6 +312,7 @@ function preview(container, book) {
         <p class="author">${esc(authorsText(book))}</p>
         <p class="muted small">${[book.year, book.publisher, book.pages && `${book.pages} Seiten`].filter(Boolean).map(esc).join(' · ')}</p>
         ${book.subjects?.length ? `<div class="chips">${book.subjects.slice(0, 6).map((s) => `<span class="chip">${esc(s)}</span>`).join('')}</div>` : ''}
+        ${googleNote(book)}
         ${dup ? `<p class="warn">Dieses Buch steht schon in deinem Regal: <a href="#/buch/${dup.id}">${esc(dup.title)}</a></p>` : ''}
         <div class="field-row">
           <label class="field"><span class="label">Status</span>

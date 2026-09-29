@@ -1,0 +1,10 @@
+{
+  "name": "buecherregal",
+  "version": "1.0.0",
+  "description": "Digitales Bücherregal zum Katalogisieren physischer Bücher – mit Kurzrezensionen, Lesestatistik und Empfehlungen.",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "start": "node server.js"
+  }
+}

@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Bücherregal</title>
+  <meta name="description" content="Dein digitales Bücherregal: gedruckte Bücher per Barcode erfassen, bewerten, Rezensionen schreiben, Lesestatistik und Empfehlungen – und sehen, was deine Freunde lesen.">
+  <meta property="og:title" content="Bücherregal – dein digitales Bücherregal">
+  <meta property="og:description" content="Bücher erfassen, bewerten und mit Freunden teilen.">
+  <meta property="og:url" content="https://buchbrett.de/">
+  <link rel="icon" href="icon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <header class="topbar">
+    <a class="brand" href="#/">
+      <img src="icon.svg" alt="" width="28" height="28">
+      <span>Bücherregal</span>
+    </a>
+    <nav class="nav" aria-label="Hauptnavigation">
+      <a href="#/regal" data-nav="regal">Regal</a>
+      <a href="#/statistik" data-nav="statistik">Statistik</a>
+      <a href="#/empfehlungen" data-nav="empfehlungen"><span class="long">Empfehlungen</span><span class="short">Tipps</span></a>
+      <a href="#/freunde" data-nav="freunde">Freunde <span class="nav-badge" id="friend-badge" hidden></span></a>
+      <a href="#/konto" data-nav="konto" id="nav-account">Anmelden</a>
+      <a href="#/einstellungen" data-nav="einstellungen" aria-label="Einstellungen" title="Einstellungen">⚙</a>
+    </nav>
+    <a href="#/hinzufuegen" class="btn btn-primary nav-add">+ Buch</a>
+  </header>
+
+  <main id="view" tabindex="-1"></main>
+
+  <footer class="site-footer">
+    <a href="#/start">Über Bücherregal</a>
+    <span aria-hidden="true">·</span>
+    <a href="https://mein.online-impressum.de/buchbrett/" target="_blank" rel="noopener">Impressum</a>
+    <span aria-hidden="true">·</span>
+    <a href="datenschutz.html">Datenschutz</a>
+    <span aria-hidden="true">·</span>
+    <span>Buchdaten: <a href="https://openlibrary.org" target="_blank" rel="noopener">Open Library</a>, <a href="https://www.dnb.de" target="_blank" rel="noopener">Deutsche Nationalbibliothek</a> und <a href="https://books.google.com" target="_blank" rel="noopener">Google Books</a></span>
+  </footer>
+
+  <div id="toast" class="toast" role="status" aria-live="polite"></div>
+
+  <script type="module" src="js/app.js"></script>
+</body>
+</html>

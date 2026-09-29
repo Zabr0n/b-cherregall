@@ -19,7 +19,7 @@ Danach http://localhost:8080 öffnen. Alternativ funktioniert jeder statische We
 - **Regal** – Cover-Ansicht auf Regalbrettern oder als Liste; Filter nach Gelesen, Lese ich,
   Ungelesen, Wunschliste und Verliehen; Suche über Titel, Autor:in, Genre und Standort.
 - **Bücher erfassen** – per ISBN (Daten und Cover von Open Library, Google Books als Fallback),
-  per **Barcode-Scan** mit der Handykamera (Chrome/Android, braucht HTTPS), per Titelsuche oder manuell.
+  per **Barcode-Scan** mit der Handykamera (alle aktuellen Handy-Browser inkl. Safari auf dem iPhone, braucht HTTPS), per Titelsuche oder manuell.
 - **Buchseite** – Lesestatus, 1–5 Sterne, Kurzrezension, Lesezeitraum, Standort im Regal,
   Format, „verliehen an“, Genres/Schlagwörter. Alles wird automatisch gespeichert.
 - **Statistik** – Jahresziel mit Fortschritt, gelesene Seiten, Ø-Bewertung, Bücher pro Monat,
@@ -107,6 +107,7 @@ js/config.js        Adresse der API
 js/api.js           Open Library / Google Books, ISBN-Prüfung
 js/recommend.js     Geschmacksprofil & Empfehlungen
 js/views/*.js       Startseite, Regal, Buch, Hinzufügen, Statistik, Empfehlungen, Einstellungen
+js/vendor/           Barcode-Erkennung für Browser ohne eigenen BarcodeDetector (barcode-detector + zxing-wasm, siehe LICENSES.txt)
 server.js           Minimaler statischer Server für `npm start`
 api/                Konto-API für Railway (Express + PostgreSQL)
 ```

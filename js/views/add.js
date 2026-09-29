@@ -6,7 +6,33 @@ import { $, $$, esc, coverHtml, authorsText, toast } from '../ui.js';
 let tab = 'isbn';
 // Gilt für alle Bücher, die auf dieser Seite hinzugefügt werden (Standard aus den Freunde-Einstellungen).
 let shareNew = true;
-const canScan = 'BarcodeDetector' in window && !!navigator.mediaDevices?.getUserMedia;
+// Kamera reicht: Wo der Browser keinen eigenen BarcodeDetector hat (z. B. Safari auf dem iPhone),
+// wird beim ersten Scan die mitgelieferte Erkennung aus js/vendor/ nachgeladen.
+const canScan = !!navigator.mediaDevices?.getUserMedia;
+const EAN_FORMATS = ['ean_13', 'ean_8', 'upc_a'];
+
+let detectorPromise = null;
+function getDetector() {
+  detectorPromise ??= (async () => {
+    if ('BarcodeDetector' in window) {
+      try {
+        const supported = await BarcodeDetector.getSupportedFormats();
+        if (supported.includes('ean_13')) return new BarcodeDetector({ formats: EAN_FORMATS.filter((f) => supported.includes(f)) });
+      } catch { /* dann die mitgelieferte Erkennung */ }
+    }
+    const { BarcodeDetector: Fallback, prepareZXingModule } = await import('../vendor/barcode-detector.js');
+    const wasm = new URL('../vendor/zxing_reader.wasm', import.meta.url).href;
+    await prepareZXingModule({
+      overrides: { locateFile: (path, prefix) => (path.endsWith('.wasm') ? wasm : prefix + path) },
+      fireImmediately: true,
+    });
+    return new Fallback({ formats: EAN_FORMATS });
+  })().catch((e) => {
+    detectorPromise = null; // beim nächsten Versuch erneut laden
+    throw e;
+  });
+  return detectorPromise;
+}
 
 export function render(main) {
   shareNew = getState().settings.shareByDefault !== false;
@@ -59,7 +85,8 @@ function isbnPanel(panel) {
           ${canScan ? '<button type="button" class="btn" id="scan">📷 Scannen</button>' : ''}
         </div>
       </label>
-      ${canScan ? '' : '<p class="muted small">Tipp: Auf dem Smartphone (Chrome/Android, über HTTPS) kannst du Barcodes direkt mit der Kamera scannen.</p>'}
+      ${canScan ? '' : '<p class="muted small">Tipp: Auf dem Smartphone kannst du den Barcode auf der Buchrückseite direkt mit der Kamera scannen.</p>'}
+      <p class="muted small scan-status" hidden></p>
       <div class="scanner" hidden><video playsinline muted></video><div class="scan-line"></div>
         <button type="button" class="btn" id="scan-stop">Scannen beenden</button></div>
     </form>
@@ -104,24 +131,38 @@ function isbnPanel(panel) {
   if (canScan) {
     const box = $('.scanner', form);
     const video = $('video', box);
+    const status = $('.scan-status', form);
+    let attempt = 0; // erkennt, ob während des Startens schon wieder gestoppt wurde
     const stop = () => {
+      attempt++;
       scanner?.stop();
       scanner = null;
       box.hidden = true;
+      status.hidden = true;
     };
     $('#scan', form).addEventListener('click', async () => {
-      box.hidden = false;
+      stop();
+      const mine = attempt;
+      status.textContent = 'Scanner wird vorbereitet …';
+      status.hidden = false;
       try {
-        scanner = await startScanner(video, (code) => {
+        const detector = await getDetector();
+        if (mine !== attempt) return;
+        box.hidden = false;
+        status.textContent = 'Halte den Barcode auf der Buchrückseite vor die Kamera.';
+        const started = await startScanner(video, detector, (code) => {
           stop();
           input.value = code;
           navigator.vibrate?.(80);
           run(code);
         });
+        if (mine !== attempt) started.stop();
+        else scanner = started;
       } catch (e) {
         console.error(e);
+        if (mine !== attempt) return;
         stop();
-        toast('Kamera nicht verfügbar');
+        toast(e?.name === 'NotAllowedError' ? 'Kamerazugriff wurde nicht erlaubt' : 'Scannen ist gerade nicht möglich – gib die ISBN einfach ein');
       }
     });
     $('#scan-stop', form).addEventListener('click', stop);
@@ -129,11 +170,15 @@ function isbnPanel(panel) {
   }
 }
 
-async function startScanner(video, onCode) {
+async function startScanner(video, detector, onCode) {
   const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
   video.srcObject = stream;
-  await video.play();
-  const detector = new BarcodeDetector({ formats: ['ean_13', 'ean_8', 'upc_a'] });
+  try {
+    await video.play();
+  } catch (e) {
+    stream.getTracks().forEach((t) => t.stop());
+    throw e;
+  }
   let alive = true;
   const tick = async () => {
     if (!alive) return;

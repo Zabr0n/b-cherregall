@@ -15,6 +15,7 @@ const types = {
   '.png': 'image/png',
   '.ico': 'image/x-icon',
   '.webmanifest': 'application/manifest+json',
+  '.wasm': 'application/wasm',
 };
 
 createServer(async (req, res) => {

@@ -32,6 +32,14 @@ const FAQ = [
   ['Geht das auch für E-Books?', 'Gedacht ist es für deine gedruckten Bücher im Regal, aber du kannst natürlich jedes Buch eintragen.'],
 ];
 
+// Ohne diese freien Projekte und Datenquellen gäbe es das Bücherregal so nicht.
+const THANKS = [
+  ['Open Library', 'https://openlibrary.org', ' vom gemeinnützigen Internet Archive – Buchdaten, Cover und die Grundlage für die Empfehlungen.'],
+  ['Deutsche Nationalbibliothek', 'https://www.dnb.de', ', deren offener Katalog auch ganz neue deutsche Bücher kennt.'],
+  ['Google Books', 'https://books.google.com', ' – für die Fälle, in denen sonst niemand ein Buch kennt.'],
+  ['zxing-cpp', 'https://github.com/zxing-cpp/zxing-cpp', ' mit zxing-wasm und barcode-detector – dank ihnen klappt das Scannen auch auf dem iPhone.'],
+];
+
 export function render(main) {
   const known = isLoggedIn() || getState().books.length > 0;
   const primary = isLoggedIn()
@@ -86,6 +94,15 @@ export function render(main) {
       <section class="landing-section narrow-section">
         <h2>Häufige Fragen</h2>
         ${FAQ.map(([q, a]) => `<details class="faq"><summary>${q}</summary><p class="muted">${a}</p></details>`).join('')}
+      </section>
+
+      <section class="landing-section narrow-section thanks">
+        <h2>Danke an</h2>
+        <ul>${THANKS.map(([name, url, text]) => `
+          <li><a href="${url}" target="_blank" rel="noopener"><strong>${name}</strong></a>${text}</li>`).join('')}
+        </ul>
+        <p class="muted small">Alle drei Datenquellen und die Barcode-Erkennung sind frei nutzbar –
+          großartige Arbeit, die wir gern weiterempfehlen.</p>
       </section>
 
       <section class="landing-cta card">

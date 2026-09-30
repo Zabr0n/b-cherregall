@@ -1,4 +1,4 @@
-import { getState, addBook, isFriendsVisible, STATUS } from '../store.js';
+import { getState, addBook, isFriendsVisible, isAudio, statusLabel } from '../store.js';
 import { isLoggedIn } from '../account.js';
 import { $, $$, esc, coverHtml, starsHtml, authorsText, formatDate, toast } from '../ui.js';
 import { DEMO_BOOKS } from '../demo.js';
@@ -133,7 +133,7 @@ function draw() {
           <strong>${esc(b.title)} ${lock(b)}</strong>
           <span class="muted">${esc(authorsText(b))}${b.year ? ` · ${b.year}` : ''}</span>
         </div>
-        <span class="badge badge-${b.status}">${STATUS[b.status]}</span>
+        <span class="badge badge-${b.status}">${statusLabel(b)}</span>
         <span class="list-rating">${b.rating ? starsHtml(b.rating, { size: 'sm' }) : ''}</span>
         <span class="muted list-extra">${b.lentTo ? `verliehen an ${esc(b.lentTo)}` : esc(b.location)}${b.finishedAt ? `<br>${formatDate(b.finishedAt)}` : ''}</span>
       </a>`).join('')}</div>`;
@@ -144,7 +144,7 @@ function draw() {
     <a class="book" href="#/buch/${b.id}" title="${esc(b.title)} – ${esc(authorsText(b))}">
       <div class="book-slot">
         ${coverHtml(b)}
-        ${b.status === 'reading' ? '<span class="ribbon" title="Lese ich gerade">Lese ich</span>' : ''}
+        ${b.status === 'reading' ? `<span class="ribbon" title="${statusLabel(b)}">${isAudio(b) ? 'Höre ich' : 'Lese ich'}</span>` : ''}
         ${b.lentTo ? `<span class="lent" title="Verliehen an ${esc(b.lentTo)}">↗ ${esc(b.lentTo)}</span>` : ''}
       </div>
       <div class="book-meta">

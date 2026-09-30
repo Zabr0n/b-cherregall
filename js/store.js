@@ -17,6 +17,18 @@ export const STATUS = {
 
 export const FORMATS = ['Hardcover', 'Taschenbuch', 'Paperback', 'Hörbuch', 'Sonstiges'];
 
+// Hörbücher: eigene Status-Bezeichnungen und Dauer statt Seiten.
+export const AUDIOBOOK = 'Hörbuch';
+export const isAudio = (b) => b?.format === AUDIOBOOK;
+const AUDIO_STATUS = {
+  read: 'Gehört',
+  reading: 'Höre ich gerade',
+  unread: 'Ungehört',
+  wishlist: 'Wunschliste',
+};
+/** Status-Bezeichnung passend zum Format, z. B. „Gehört“ statt „Gelesen“ bei Hörbüchern. */
+export const statusLabel = (b, status = b.status) => (isAudio(b) ? AUDIO_STATUS : STATUS)[status] || '';
+
 let state = load();
 const listeners = new Set();
 
@@ -74,6 +86,7 @@ export function normalizeBook(data) {
     publisher: '',
     year: null,
     pages: null,
+    duration: null, // Hörbücher: Länge in Minuten
     coverUrl: '',
     subjects: [],
     workKey: '',

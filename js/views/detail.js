@@ -1,6 +1,6 @@
-import { getState, getBook, updateBook, removeBook, today, isFriendsVisible, STATUS, FORMATS } from '../store.js';
+import { getState, getBook, updateBook, removeBook, today, isFriendsVisible, isAudio, statusLabel, STATUS, FORMATS } from '../store.js';
 import { isLoggedIn } from '../account.js';
-import { $, $$, esc, coverHtml, starsHtml, authorsText, toast, googleNote } from '../ui.js';
+import { $, $$, esc, coverHtml, starsHtml, authorsText, toast, googleNote, formatDuration, durationInput, parseDuration } from '../ui.js';
 import { cleanSubjects, findCover, editionCovers } from '../api.js';
 import { refresh as refreshCover } from '../covers.js';
 
@@ -13,6 +13,7 @@ export function render(main, id) {
     return;
   }
 
+  const audio = isAudio(b);
   main.innerHTML = `
     <section class="page detail">
       <a class="back" href="#/regal">← Regal</a>
@@ -22,7 +23,9 @@ export function render(main, id) {
           <button class="btn btn-sm" id="pick-cover">Anderes Cover wählen</button>
           <dl class="facts">
             ${b.year ? `<dt>Jahr</dt><dd>${b.year}</dd>` : ''}
-            ${b.pages ? `<dt>Seiten</dt><dd>${b.pages}</dd>` : ''}
+            ${audio
+              ? (b.duration ? `<dt>Dauer</dt><dd>${formatDuration(b.duration)}</dd>` : '')
+              : (b.pages ? `<dt>Seiten</dt><dd>${b.pages}</dd>` : '')}
             ${b.publisher ? `<dt>Verlag</dt><dd>${esc(b.publisher)}</dd>` : ''}
             ${b.isbn ? `<dt>ISBN</dt><dd>${esc(b.isbn)}</dd>` : ''}
             <dt>Im Regal seit</dt><dd>${new Date(b.addedAt).toLocaleDateString('de-DE')}</dd>
@@ -37,9 +40,9 @@ export function render(main, id) {
 
           <div class="field">
             <span class="label">Status</span>
-            <div class="seg seg-wide" role="radiogroup" aria-label="Lesestatus">
-              ${Object.entries(STATUS).map(([k, label]) => `
-                <button type="button" role="radio" data-status="${k}" aria-checked="${b.status === k}" class="${b.status === k ? 'active' : ''}">${label}</button>`).join('')}
+            <div class="seg seg-wide" role="radiogroup" aria-label="${audio ? 'Hörstatus' : 'Lesestatus'}">
+              ${Object.keys(STATUS).map((k) => `
+                <button type="button" role="radio" data-status="${k}" aria-checked="${b.status === k}" class="${b.status === k ? 'active' : ''}">${statusLabel(b, k)}</button>`).join('')}
             </div>
           </div>
 
@@ -102,7 +105,9 @@ export function render(main, id) {
             </div>
             <div class="field-row">
               <label class="field"><span class="label">Jahr</span><input name="year" type="number" value="${b.year ?? ''}"></label>
-              <label class="field"><span class="label">Seiten</span><input name="pages" type="number" min="0" value="${b.pages ?? ''}"></label>
+              ${audio
+                ? `<label class="field"><span class="label">Dauer <span class="muted">(Std:Min)</span></span><input name="duration" inputmode="decimal" placeholder="z. B. 12:30" value="${durationInput(b.duration)}"></label>`
+                : `<label class="field"><span class="label">Seiten</span><input name="pages" type="number" min="0" value="${b.pages ?? ''}"></label>`}
               <label class="field"><span class="label">Verlag</span><input name="publisher" value="${esc(b.publisher)}"></label>
               <label class="field"><span class="label">ISBN</span><input name="isbn" value="${esc(b.isbn)}"></label>
             </div>
@@ -152,7 +157,7 @@ export function render(main, id) {
         x.classList.toggle('active', x === btn);
         x.setAttribute('aria-checked', x === btn);
       });
-      if (status === 'read' && !b.rating) toast('Fertig gelesen! Wie viele Sterne gibst du?');
+      if (status === 'read' && !b.rating) toast(`Fertig ${audio ? 'gehört' : 'gelesen'}! Wie viele Sterne gibst du?`);
     }),
   );
 
@@ -189,13 +194,15 @@ export function render(main, id) {
     authors: (v) => v.split(',').map((s) => s.trim()).filter(Boolean),
     year: (v) => (v ? +v : null),
     pages: (v) => (v ? +v : null),
+    duration: parseDuration,
     title: (v) => v.trim() || b.title,
   };
   $$('input[name], select[name]', main).forEach((input) =>
     input.addEventListener('change', () => {
       const parse = parsers[input.name] || ((v) => v.trim());
       save({ [input.name]: parse(input.value) });
-      if (['title', 'authors', 'coverUrl'].includes(input.name)) render(main, id);
+      // Beim Format wechseln Status-Bezeichnungen und Seiten/Dauer.
+      if (['title', 'authors', 'coverUrl', 'format'].includes(input.name)) render(main, id);
     }),
   );
 

@@ -1,7 +1,7 @@
-import { addBook, findDuplicate, getState, STATUS, FORMATS } from '../store.js';
+import { addBook, findDuplicate, getState, statusLabel, AUDIOBOOK, STATUS, FORMATS } from '../store.js';
 import { isLoggedIn } from '../account.js';
 import { lookupIsbn, searchBooks, normalizeIsbn, isValidIsbn } from '../api.js';
-import { $, $$, esc, coverHtml, authorsText, toast, googleNote } from '../ui.js';
+import { $, $$, esc, coverHtml, authorsText, toast, googleNote, parseDuration } from '../ui.js';
 
 let tab = 'isbn';
 // Gilt für alle Bücher, die auf dieser Seite hinzugefügt werden (Standard aus den Freunde-Einstellungen).
@@ -327,6 +327,7 @@ function preview(container, book) {
         </div>
       </div>
     </div>`;
+  followFormat(container);
   $('#add', container).addEventListener('click', () => {
     const saved = addBook({ ...book, status: $('[name=status]', container).value, format: $('[name=format]', container).value, friendsVisible: shareNew });
     toast(`„${saved.title}“ hinzugefügt`);
@@ -380,7 +381,7 @@ function searchPanel(panel) {
         btn.addEventListener('click', () => {
           const book = results[+btn.dataset.add];
           const saved = addBook({ ...book, status: btn.dataset.status, friendsVisible: shareNew });
-          toast(`„${saved.title}“ → ${STATUS[saved.status]}`);
+          toast(`„${saved.title}“ → ${statusLabel(saved)}`);
           if (saved.status === 'read') location.hash = `#/buch/${saved.id}`;
           else btn.closest('.result-actions').innerHTML = `<a class="btn btn-sm" href="#/buch/${saved.id}">Öffnen</a>`;
         }),
@@ -404,7 +405,11 @@ function manualPanel(panel) {
       <div class="field-row">
         <label class="field"><span class="label">ISBN</span><input name="isbn"></label>
         <label class="field"><span class="label">Jahr</span><input name="year" type="number"></label>
-        <label class="field"><span class="label">Seiten</span><input name="pages" type="number" min="0"></label>
+        <label class="field"><span class="label">Format</span>
+          <select name="format"><option value="">–</option>${FORMATS.map((f) => `<option>${f}</option>`).join('')}</select>
+        </label>
+        <label class="field" data-print><span class="label">Seiten</span><input name="pages" type="number" min="0"></label>
+        <label class="field" data-audio hidden><span class="label">Dauer <span class="muted">(Std:Min)</span></span><input name="duration" inputmode="decimal" placeholder="z. B. 12:30"></label>
       </div>
       <div class="field-row">
         <label class="field grow"><span class="label">Genres / Schlagwörter (kommagetrennt)</span><input name="subjects" placeholder="fantasy, krimi, …"></label>
@@ -415,6 +420,7 @@ function manualPanel(panel) {
       <button class="btn btn-primary">Ins Regal stellen</button>
     </form>`;
 
+  followFormat(panel);
   $('#manual-form', panel).addEventListener('submit', (e) => {
     e.preventDefault();
     const f = new FormData(e.target);
@@ -424,7 +430,8 @@ function manualPanel(panel) {
       authors: list(f.get('authors')),
       isbn: normalizeIsbn(f.get('isbn')),
       year: +f.get('year') || null,
-      pages: +f.get('pages') || null,
+      ...(f.get('format') === AUDIOBOOK ? { duration: parseDuration(f.get('duration')) } : { pages: +f.get('pages') || null }),
+      format: f.get('format'),
       subjects: list(f.get('subjects')).map((s) => s.toLowerCase()),
       status: f.get('status'),
       friendsVisible: shareNew,
@@ -432,4 +439,18 @@ function manualPanel(panel) {
     toast(`„${saved.title}“ hinzugefügt`);
     location.hash = `#/buch/${saved.id}`;
   });
+}
+
+/** Passt Status-Bezeichnungen (Gelesen ↔ Gehört) und Seiten/Dauer an das gewählte Format an. */
+function followFormat(root) {
+  const format = $('[name=format]', root);
+  const update = () => {
+    const book = { format: format.value };
+    $$('[name=status] option', root).forEach((o) => (o.textContent = statusLabel(book, o.value)));
+    const audio = format.value === AUDIOBOOK;
+    $$('[data-print]', root).forEach((el) => (el.hidden = audio));
+    $$('[data-audio]', root).forEach((el) => (el.hidden = !audio));
+  };
+  format.addEventListener('change', update);
+  update();
 }

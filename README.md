@@ -34,6 +34,14 @@ Danach http://localhost:8080 öffnen. Alternativ funktioniert jeder statische We
 - **Als App** – In Safari über Teilen → „Zum Home-Bildschirm“ (Android/Chrome: „App installieren“)
   bekommt das Regal ein eigenes Symbol und öffnet im Vollbild ohne Browserleisten. Kein App Store nötig.
 
+## Genres
+
+Schlagwörter kommen von Open Library, Google Books und der DNB – oft mehrsprachig und doppelt
+(„fantasy“, „fantasía“, „Fantasy fiction“). `js/genres.js` bildet bekannte Begriffe auf ein deutsches
+Genre ab (z. B. „Fantasy“, „Romance“, „Young Adult“, „Krimi“) und lässt Allgemeines wie „fiction“ oder
+„New York Times Bestseller“ weg. Von Open Library und Google Books werden nur erkannte Genres übernommen,
+selbst eingetragene Schlagwörter bleiben immer erhalten. Neue Schreibweisen ergänzt man in `GENRES`.
+
 ## So funktionieren die Empfehlungen
 
 Jede Bewertung wird um 3 Sterne zentriert (5★ → +2, 4★ → +1, 3★ → 0, 2★ → −1, 1★ → −2) und auf

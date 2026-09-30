@@ -1,5 +1,7 @@
 // Persistenz im localStorage. Alle Änderungen laufen über diese Funktionen.
 
+import { normalizeSubjects } from './genres.js';
+
 const KEY = 'buecherregal.v1';
 
 const DEFAULTS = {
@@ -25,16 +27,22 @@ function load() {
     const raw = localStorage.getItem(KEY);
     if (raw) {
       const s = JSON.parse(raw);
-      return {
+      return withCleanSubjects({
         ...structuredClone(DEFAULTS),
         ...s,
         settings: { ...DEFAULTS.settings, ...s.settings },
-      };
+      });
     }
   } catch (e) {
     console.error('Konnte gespeicherte Daten nicht lesen', e);
   }
   return structuredClone(DEFAULTS);
+}
+
+/** Genres aller Bücher vereinheitlichen (auch für Bücher, die vor genres.js gespeichert wurden). */
+function withCleanSubjects(s) {
+  (s.books || []).forEach((b) => (b.subjects = normalizeSubjects(b.subjects)));
+  return s;
 }
 
 function save() {
@@ -95,6 +103,7 @@ export const isFriendsVisible = (b) => b.friendsVisible !== false;
 
 export function addBook(data) {
   const book = normalizeBook(data);
+  book.subjects = normalizeSubjects(book.subjects);
   if (book.status === 'read' && !book.finishedAt) book.finishedAt = today();
   if (book.status === 'reading' && !book.startedAt) book.startedAt = today();
   state.books.push(book);
@@ -154,11 +163,11 @@ export function resetDismissed() {
 
 /** Ersetzt den kompletten Stand, z. B. mit den Daten vom Server. */
 export function replaceState(data) {
-  state = {
+  state = withCleanSubjects({
     ...structuredClone(DEFAULTS),
     ...data,
     settings: { ...DEFAULTS.settings, ...data?.settings },
-  };
+  });
   save();
 }
 
@@ -170,7 +179,7 @@ export function exportJSON() {
 export function importJSON(text, mode = 'merge') {
   const data = JSON.parse(text);
   if (!Array.isArray(data.books)) throw new Error('Keine gültige Bücherregal-Sicherung.');
-  const books = data.books.map((b) => normalizeBook({ ...b, id: b.id || uid() }));
+  const books = data.books.map((b) => normalizeBook({ ...b, id: b.id || uid(), subjects: normalizeSubjects(b.subjects) }));
   let added = 0;
   if (mode === 'replace') {
     state = {

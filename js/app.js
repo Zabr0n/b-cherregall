@@ -85,6 +85,9 @@ route();
 initAccount();
 initFriends();
 
+// Den Browser bitten, die Daten (Bücher, Anmeldung) nicht bei Speicherknappheit zu löschen.
+navigator.storage?.persist?.().catch(() => {});
+
 // Fehlende Cover für neue und bestehende Bücher im Hintergrund nachladen.
 subscribe((state) => ensureCovers(state.books));
 ensureCovers(getState().books);

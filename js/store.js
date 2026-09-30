@@ -15,7 +15,7 @@ export const STATUS = {
   wishlist: 'Wunschliste',
 };
 
-export const FORMATS = ['Hardcover', 'Taschenbuch', 'Paperback', 'Sonstiges'];
+export const FORMATS = ['Hardcover', 'Taschenbuch', 'Paperback', 'Hörbuch', 'Sonstiges'];
 
 let state = load();
 const listeners = new Set();

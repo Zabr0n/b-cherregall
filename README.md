@@ -31,6 +31,8 @@ Danach http://localhost:8080 öffnen. Alternativ funktioniert jeder statische We
     („Weil dir … gefallen hat“). Mit einem Klick auf die Wunschliste, als „Hab ich“ ins Regal
     oder mit „Kein Interesse“ ausblenden.
 - **Sicherung** – Export/Import als JSON (Einstellungen), dazu Beispieldaten zum Ausprobieren.
+- **Als App** – In Safari über Teilen → „Zum Home-Bildschirm“ (Android/Chrome: „App installieren“)
+  bekommt das Regal ein eigenes Symbol und öffnet im Vollbild ohne Browserleisten. Kein App Store nötig.
 
 ## So funktionieren die Empfehlungen
 
@@ -98,6 +100,8 @@ Tests der API (brauchen eine leere Test-Datenbank):
 
 ```
 index.html          App-Hülle und Navigation
+manifest.webmanifest  Name, Symbole und Vollbild für „Zum Home-Bildschirm“
+icons/              App-Symbole als PNG (aus icon.svg erzeugt)
 css/style.css       Gestaltung (Hell/Dunkel automatisch)
 js/app.js           Hash-Router (ohne Ziel: Startseite für Neue, sonst Regal)
 js/store.js         Datenmodell & Persistenz (localStorage)

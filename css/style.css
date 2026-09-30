@@ -131,6 +131,7 @@ input, select, textarea {
 input:focus, select:focus, textarea:focus { outline: 2px solid var(--accent); outline-offset: -1px; border-color: transparent; }
 textarea { resize: vertical; line-height: 1.5; }
 .field { display: flex; flex-direction: column; gap: .3rem; margin-bottom: 1rem; min-width: 0; }
+.field[hidden] { display: none; }
 .field .row input { flex: 1; }
 .label { font-size: .85rem; font-weight: 600; color: var(--muted); }
 .field-row { display: flex; gap: 1rem; flex-wrap: wrap; }

@@ -1,5 +1,5 @@
-import { getState, updateSettings } from '../store.js';
-import { $, $$, esc, coverHtml, starsHtml, authorsText, formatDate, MONTHS } from '../ui.js';
+import { getState, updateSettings, isAudio } from '../store.js';
+import { $, $$, esc, coverHtml, starsHtml, authorsText, formatDate, formatDuration, MONTHS } from '../ui.js';
 
 let year = new Date().getFullYear();
 
@@ -12,7 +12,12 @@ export function render(main) {
   if (!years.includes(year)) year = years[0];
 
   const readYear = read.filter((b) => yearOf(b) === year).sort((a, b) => b.finishedAt.localeCompare(a.finishedAt));
-  const pagesYear = readYear.reduce((s, b) => s + (b.pages || 0), 0);
+  // Seiten zählen nur bei gedruckten Büchern, bei Hörbüchern die Hördauer.
+  const printYear = readYear.filter((b) => !isAudio(b));
+  const audioYear = readYear.filter(isAudio);
+  const pagesYear = printYear.reduce((s, b) => s + (b.pages || 0), 0);
+  const minutesYear = audioYear.reduce((s, b) => s + (b.duration || 0), 0);
+  const showPages = printYear.length > 0 || audioYear.length === 0;
   const rated = books.filter((b) => b.rating > 0);
   const avg = rated.length ? rated.reduce((s, b) => s + b.rating, 0) / rated.length : 0;
   const owned = books.filter((b) => b.status !== 'wishlist');
@@ -48,15 +53,17 @@ export function render(main) {
 
       <div class="tiles">
         <div class="tile tile-goal">
-          <span class="tile-label">Gelesen ${year}</span>
+          <span class="tile-label">${audioYear.length ? (printYear.length ? 'Gelesen &amp; gehört' : 'Gehört') : 'Gelesen'} ${year}</span>
           <span class="tile-value">${readYear.length}${goal ? `<small> / ${goal}</small>` : ''}</span>
           ${goal ? `<div class="progress" role="progressbar" aria-valuemin="0" aria-valuemax="${goal}" aria-valuenow="${readYear.length}">
             <span style="width:${Math.min(100, (readYear.length / goal) * 100)}%"></span></div>
             <span class="tile-sub">${goalText(readYear.length, goal, isCurrent)}
               <button class="link" id="edit-goal">Ziel ändern</button></span>` : '<button class="link" id="edit-goal">Jahresziel setzen</button>'}
         </div>
-        <div class="tile"><span class="tile-label">Seiten ${year}</span><span class="tile-value">${pagesYear.toLocaleString('de-DE')}</span>
-          <span class="tile-sub">${readYear.length ? `Ø ${Math.round(pagesYear / readYear.length)} pro Buch` : '&nbsp;'}</span></div>
+        ${showPages ? `<div class="tile"><span class="tile-label">Seiten ${year}</span><span class="tile-value">${pagesYear.toLocaleString('de-DE')}</span>
+          <span class="tile-sub">${printYear.length ? `Ø ${Math.round(pagesYear / printYear.length)} pro Buch` : '&nbsp;'}</span></div>` : ''}
+        ${audioYear.length ? `<div class="tile"><span class="tile-label">Hördauer ${year}</span><span class="tile-value">${Math.round(minutesYear / 60).toLocaleString('de-DE')}<small> Std.</small></span>
+          <span class="tile-sub">${audioYear.length} ${audioYear.length === 1 ? 'Hörbuch' : 'Hörbücher'}${minutesYear ? ` · Ø ${formatDuration(Math.round(minutesYear / audioYear.length))}` : ''}</span></div>` : ''}
         <div class="tile"><span class="tile-label">Ø Bewertung</span><span class="tile-value">${avg ? avg.toFixed(1).replace('.', ',') : '–'}</span>
           <span class="tile-sub">${rated.length} bewertete Bücher</span></div>
         <div class="tile"><span class="tile-label">Im Regal</span><span class="tile-value">${owned.length}</span>

@@ -1,4 +1,4 @@
-import { getState, addBook, findDuplicate, updateSettings, setAllFriendsVisible, isFriendsVisible, STATUS } from '../store.js';
+import { getState, addBook, findDuplicate, updateSettings, setAllFriendsVisible, isFriendsVisible, isAudio, statusLabel } from '../store.js';
 import { isLoggedIn, getUser, updateProfile } from '../account.js';
 import { searchUsers, getFriends, addFriend, removeFriend, getFriendLibrary, setIncoming } from '../friends.js';
 import { $, $$, esc, coverHtml, starsHtml, authorsText, formatDate, toast } from '../ui.js';
@@ -271,7 +271,7 @@ async function friendShelf(main, userId, view) {
           <button type="button" class="book" data-book="${books.indexOf(b)}" title="${esc(b.title)} – ${esc(authorsText(b))}">
             <div class="book-slot">
               ${coverHtml(b)}
-              ${b.status === 'reading' ? '<span class="ribbon">Liest gerade</span>' : ''}
+              ${b.status === 'reading' ? `<span class="ribbon">${isAudio(b) ? 'Hört gerade' : 'Liest gerade'}</span>` : ''}
             </div>
             <div class="book-meta">
               <span class="book-title">${esc(b.title)}</span>
@@ -322,8 +322,8 @@ function openBook(dialog, b, friendName) {
         <div class="grow">
           <h2>${esc(b.title)}</h2>
           <p class="author">${esc(authorsText(b))}</p>
-          <p class="muted small">${[b.year, b.pages && `${b.pages} Seiten`, b.format].filter(Boolean).map(esc).join(' · ')}</p>
-          <p><span class="badge badge-${esc(b.status)}">${esc(STATUS[b.status] || '')}</span>
+          <p class="muted small">${[b.year, !isAudio(b) && b.pages && `${b.pages} Seiten`, b.format].filter(Boolean).map(esc).join(' · ')}</p>
+          <p><span class="badge badge-${esc(b.status)}">${esc(statusLabel(b))}</span>
             ${b.rating ? starsHtml(b.rating) : ''}</p>
           ${dates ? `<p class="small muted">${dates}</p>` : ''}
         </div>

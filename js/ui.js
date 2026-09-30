@@ -59,6 +59,27 @@ export function formatDate(iso) {
   return d ? `${d}.${m}.${y}` : iso;
 }
 
+/** Hörbuch-Dauer in Minuten → „12 Std. 30 Min.“ */
+export function formatDuration(min) {
+  if (!min) return '';
+  const h = Math.floor(min / 60);
+  const m = min % 60;
+  return [h && `${h} Std.`, m && `${m} Min.`].filter(Boolean).join(' ');
+}
+
+/** Minuten → Eingabewert „12:30“ */
+export const durationInput = (min) => (min ? `${Math.floor(min / 60)}:${String(min % 60).padStart(2, '0')}` : '');
+
+/** Liest „12:30“, „12 h 30“, „12,5“ oder „12“ (Stunden) als Minuten; sonst null. */
+export function parseDuration(value) {
+  const v = String(value || '').trim().toLowerCase();
+  if (!v) return null;
+  const hm = v.match(/^(\d+)\s*(?::|h|std\.?)\s*(\d{1,2})?\s*(?:m|min\.?)?$/);
+  if (hm) return +hm[1] * 60 + (+hm[2] || 0) || null;
+  const hours = parseFloat(v.replace(',', '.'));
+  return hours > 0 ? Math.round(hours * 60) : null;
+}
+
 export const MONTHS = ['Jan', 'Feb', 'Mär', 'Apr', 'Mai', 'Jun', 'Jul', 'Aug', 'Sep', 'Okt', 'Nov', 'Dez'];
 
 /** Quellenhinweis, wenn Buchdaten von Google Books stammen (Nutzungsbedingungen der Books API). */

@@ -22,6 +22,8 @@ Danach http://localhost:8080 öffnen. Alternativ funktioniert jeder statische We
   per **Barcode-Scan** mit der Handykamera (alle aktuellen Handy-Browser inkl. Safari auf dem iPhone, braucht HTTPS), per Titelsuche oder manuell.
 - **Buchseite** – Lesestatus, 1–5 Sterne, Kurzrezension, Lesezeitraum, Standort im Regal,
   Format, „verliehen an“, Genres/Schlagwörter. Alles wird automatisch gespeichert.
+- **Hörbücher** – Format „Hörbuch“: Status heißt dann „Gehört“ / „Höre ich gerade“ / „Ungehört“, statt Seiten
+  wird die Dauer erfasst (z. B. `12:30`), und die Statistik zeigt die Hördauer des Jahres.
 - **Statistik** – Jahresziel mit Fortschritt, gelesene Seiten, Ø-Bewertung, Bücher pro Monat,
   Bewertungsverteilung, eine Zeitleiste „Gelesen in …“ mit deinen Rezensionen, Top-Genres und -Autor:innen.
 - **Empfehlungen**

@@ -1,5 +1,7 @@
 // Buchdaten von Open Library, der Deutschen Nationalbibliothek (ISBN-Suche) und Google Books.
 
+import { normalizeSubjects } from './genres.js';
+
 const OL = 'https://openlibrary.org';
 const FIELDS = 'key,title,subtitle,author_name,first_publish_year,cover_i,subject,isbn,number_of_pages_median,publisher,ratings_average,ratings_count';
 
@@ -22,21 +24,25 @@ export function isValidIsbn(isbn) {
 // Open-Library-Schlagwörter sind oft verrauscht („nyt:…“, „Accessible book“ …).
 const NOISE = /^(nyt|award|in library|accessible book|protected daisy|lending library|overdrive|large type|open library|internet archive|long now|reading level|staff picks|translations into|new york times|general|fiction in english|english fiction|literature|juvenile works|juvenile literature|textbooks?)$/i;
 
-export function cleanSubjects(list, limit = 20) {
-  const out = new Set();
+/**
+ * Zerlegt Schlagwörter, filtert Rauschen und vereinheitlicht sie zu deutschen Genres (siehe genres.js).
+ * `strict`: nur bekannte Genres behalten – für die mehrsprachigen Quellen Open Library und Google Books.
+ */
+export function cleanSubjects(list, limit = 20, { strict = false } = {}) {
+  const out = [];
   for (const raw of list || []) {
     const parts = String(raw || '')
       .split(/\s*(?:,|--|\/|;)\s*/)
       .map((t) => t.trim().toLowerCase().replace(/\s+/g, ' ').replace(/\.$/, ''));
     for (const t of parts) {
-      if (t.length < 3 || t.length > 32) continue;
+      if (t.length < 2 || t.length > 32) continue;
       if (/[:=()\d]/.test(t) || NOISE.test(t)) continue;
-      out.add(t);
-      if (out.size >= limit) return [...out];
+      out.push(t);
     }
   }
-  return [...out];
+  return normalizeSubjects(out, { strict }).slice(0, limit);
 }
+const olSubjects = (list) => cleanSubjects(list, 20, { strict: true });
 
 export const coverById = (id, size = 'M') => (id ? `https://covers.openlibrary.org/b/id/${id}-${size}.jpg` : '');
 export const coverByIsbn = (isbn, size = 'M') => (isbn ? `https://covers.openlibrary.org/b/isbn/${isbn}-${size}.jpg` : '');
@@ -76,7 +82,7 @@ export function docToBook(doc, isbn = '') {
     year: doc.first_publish_year || null,
     pages: doc.number_of_pages_median || null,
     coverUrl: doc.cover_i ? coverById(doc.cover_i) : isbn ? coverByIsbn(isbn) : '',
-    subjects: cleanSubjects(doc.subject),
+    subjects: olSubjects(doc.subject),
     workKey: doc.key || '',
     olRating: doc.ratings_average || null,
     olRatingCount: doc.ratings_count || 0,
@@ -101,7 +107,7 @@ async function olEdition(isbn) {
     year: parseYear(d.publish_date),
     pages: d.number_of_pages || null,
     coverUrl: d.cover?.medium || '',
-    subjects: cleanSubjects((d.subjects || []).map((s) => s.name)),
+    subjects: olSubjects((d.subjects || []).map((s) => s.name)),
   };
 }
 
@@ -123,7 +129,7 @@ async function googleBooks(isbn) {
     year: parseYear(v.publishedDate),
     pages: v.pageCount || null,
     coverUrl: img.replace(/^http:/, 'https:'),
-    subjects: cleanSubjects(v.categories),
+    subjects: olSubjects(v.categories),
     googleLink: (v.infoLink || v.canonicalVolumeLink || '').replace(/^http:/, 'https:'),
   };
 }
@@ -205,7 +211,7 @@ export async function findCover(book) {
   for (const doc of data.docs || []) {
     const edition = doc.editions?.docs?.[0];
     const id = edition?.cover_i || doc.cover_i;
-    if (id) return { coverUrl: coverById(id), workKey: doc.key, subjects: cleanSubjects(doc.subject) };
+    if (id) return { coverUrl: coverById(id), workKey: doc.key, subjects: olSubjects(doc.subject) };
   }
   return null;
 }
@@ -248,7 +254,7 @@ export async function lookupIsbn(rawIsbn) {
   for (const source of [google, work, dnb, edition]) {
     for (const [k, v] of Object.entries(source || {})) if (!empty(v)) merged[k] = v;
   }
-  // Schlagwörter: die (englischen) von Open Library passen am besten zu den Empfehlungen.
+  // Schlagwörter: zuerst Open Library (am vollständigsten), sonst DNB oder Google – alle als deutsche Genres.
   merged.subjects = [work, edition, dnb, google].find((x) => x?.subjects?.length)?.subjects || [];
   merged.isbn = isbn;
   if (!merged.coverUrl) merged.coverUrl = coverByIsbn(isbn);

@@ -91,7 +91,7 @@ export function render(main, id) {
 
           <label class="field">
             <span class="label">Genres &amp; Schlagwörter <span class="muted">(kommagetrennt – fließen in die Empfehlungen ein)</span></span>
-            <input name="subjects" value="${esc((b.subjects || []).join(', '))}" placeholder="fantasy, magic, …">
+            <input name="subjects" value="${esc((b.subjects || []).join(', '))}" placeholder="Fantasy, Magie, …">
           </label>
 
           <details class="edit-meta">

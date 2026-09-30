@@ -407,7 +407,7 @@ function manualPanel(panel) {
         <label class="field"><span class="label">Seiten</span><input name="pages" type="number" min="0"></label>
       </div>
       <div class="field-row">
-        <label class="field grow"><span class="label">Genres / Schlagwörter (kommagetrennt)</span><input name="subjects" placeholder="fantasy, krimi, …"></label>
+        <label class="field grow"><span class="label">Genres / Schlagwörter (kommagetrennt)</span><input name="subjects" placeholder="Fantasy, Krimi, …"></label>
         <label class="field"><span class="label">Status</span>
           <select name="status">${Object.entries(STATUS).map(([k, l]) => `<option value="${k}" ${k === 'unread' ? 'selected' : ''}>${l}</option>`).join('')}</select>
         </label>

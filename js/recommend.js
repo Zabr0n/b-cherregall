@@ -8,6 +8,7 @@
 //    gegen dieses Profil gewertet und mit einer Begründung versehen.
 
 import { searchBooks } from './api.js';
+import { olSubject } from './genres.js';
 import { bookKey } from './store.js';
 
 // Sehr allgemeine Begriffe zählen weniger.
@@ -129,7 +130,8 @@ export async function discover(state, { force = false } = {}) {
 
   const extra = settings.germanRecs ? ' language:ger' : '';
   const seeds = [
-    ...profile.topSubjects.slice(0, 4).map(([s]) => ({ q: `subject:"${s}"`, sort: 'readinglog' })),
+    // Genres sind deutsch, Open Library sucht mit englischen Schlagwörtern.
+    ...profile.topSubjects.slice(0, 4).map(([s]) => ({ q: `subject:"${olSubject(s)}"`, sort: 'readinglog' })),
     ...profile.topAuthors.slice(0, 2).map(([a]) => ({ q: `author:"${a}"`, sort: '' })),
   ];
   if (!seeds.length) return [];
